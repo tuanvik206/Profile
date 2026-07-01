@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { normalizeSiteInfo } from '../lib/security';
+import { buildSafeSiteInfoPayload, SITE_INFO_SELECT_FIELDS } from '../lib/security';
 import { SiteInfo } from '../types';
-import { Save, Loader2, AlertCircle, CheckCircle, LogOut } from 'lucide-react';
+import { Save, Loader2, AlertCircle, CheckCircle, LogOut, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Session } from '@supabase/supabase-js';
 
@@ -11,6 +11,7 @@ export default function Admin() {
   const [session, setSession] = useState<Session | null>(null);
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
 
@@ -32,41 +33,44 @@ export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null, message: string }>({ type: null, message: '' });
-  const [configured, setConfigured] = useState(false);
+  const [configured, setConfigured] = useState(Boolean(supabase));
+  const [configResolved, setConfigResolved] = useState(false);
 
   useEffect(() => {
-    if (supabase) {
-      setConfigured(true);
+    const hasSupabase = Boolean(supabase);
+    setConfigured(hasSupabase);
+    setConfigResolved(true);
 
-      const clearExistingSession = async () => {
-        try {
-          await supabase.auth.signOut();
-        } catch (err) {
-          console.warn('Failed to clear existing admin session:', err);
-        }
+    if (!hasSupabase) {
+      setLoading(false);
+      return;
+    }
+
+    const clearExistingSession = async () => {
+      try {
+        await supabase.auth.signOut();
+      } catch (err) {
+        console.warn('Failed to clear existing admin session:', err);
+      }
+      setSession(null);
+      setLoading(false);
+    };
+
+    void clearExistingSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        setSession(session);
+        void fetchInfo();
+      } else {
         setSession(null);
         setLoading(false);
-      };
+      }
+    });
 
-      void clearExistingSession();
-
-      const {
-        data: { subscription },
-      } = supabase.auth.onAuthStateChange((_event, session) => {
-        if (session) {
-          setSession(session);
-          void supabase.auth.signOut();
-          setSession(null);
-        } else {
-          setSession(null);
-        }
-        setLoading(false);
-      });
-
-      return () => subscription.unsubscribe();
-    } else {
-      setLoading(false);
-    }
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -76,11 +80,19 @@ export default function Admin() {
     setAuthError('');
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: authEmail,
         password: authPassword,
       });
       if (error) throw error;
+
+      if (data.session) {
+        setSession(data.session);
+        setLoading(true);
+        await fetchInfo();
+      } else {
+        setAuthError('Đăng nhập không thành công. Vui lòng thử lại.');
+      }
     } catch (err: any) {
       setAuthError(err.message || 'Lỗi đăng nhập');
     } finally {
@@ -89,13 +101,18 @@ export default function Admin() {
   };
 
   const handleLogout = async () => {
-    if (supabase) await supabase.auth.signOut();
+    if (supabase) {
+      await supabase.auth.signOut();
+      setSession(null);
+      setAuthError('');
+      setLoading(false);
+    }
   };
 
   const fetchInfo = async () => {
     try {
       if (!supabase) return;
-      const { data, error } = await supabase.from('site_info').select('*').single();
+      const { data, error } = await supabase.from('site_info').select(SITE_INFO_SELECT_FIELDS).single();
       if (error && error.code !== 'PGRST116') {
         console.error("Error fetching site info:", error.message || error);
       }
@@ -121,7 +138,7 @@ export default function Admin() {
     try {
       const { data: existingData } = await supabase.from('site_info').select('id').single();
 
-      const safeInfo = normalizeSiteInfo(info) as SiteInfo;
+      const safeInfo = buildSafeSiteInfoPayload(info) as SiteInfo;
       const { id, ...updatePayload } = safeInfo as any;
 
       let error;
@@ -151,45 +168,16 @@ export default function Admin() {
     }
   };
 
-  if (!configured) {
+  if (!configResolved || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-black text-white font-sans">
-        <div className="max-w-md w-full bg-white/5 border border-white/10 p-8 rounded-lg text-center">
-          <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
-          <h1 className="text-xl font-bold mb-4">Chưa cấu hình Supabase</h1>
-          <p className="text-sm text-gray-400 mb-6">
-            Vui lòng thêm biến môi trường <code className="bg-black px-1 py-0.5 text-amber-500">VITE_SUPABASE_URL</code> và <code className="bg-black px-1 py-0.5 text-amber-500">VITE_SUPABASE_ANON_KEY</code> vào file <code className="bg-black px-1 py-0.5">.env.example</code> và thiết lập qua giao diện quản lý.
-          </p>
-          <div className="text-left text-xs text-gray-500 bg-black/50 p-4 rounded mb-6">
-            <p className="font-bold mb-2">Cấu trúc bảng site_info:</p>
-            <ul className="list-disc pl-4 space-y-1">
-              <li>id (int8, primary key)</li>
-              <li>name (text)</li>
-              <li>avatar_url (text)</li>
-              <li>project_link (text)</li>
-              <li>education_school (text)</li>
-              <li>education_major (text)</li>
-              <li>education_years (text)</li>
-              <li>facebook_url (text)</li>
-              <li>instagram_url (text)</li>
-              <li>github_url (text)</li>
-              <li>email (text)</li>
-              <li>linkedin_url (text)</li>
-              <li>twitter_url (text)</li>
-              <li>youtube_url (text)</li>
-              <li>tiktok_url (text)</li>
-              <li>dribbble_url (text)</li>
-              <li>behance_url (text)</li>
-              <li>twitch_url (text)</li>
-              <li>discord_url (text)</li>
-            </ul>
-          </div>
-          <button onClick={() => navigate('/')} className="px-4 py-2 bg-white/10 hover:bg-white/20 transition-colors rounded text-sm">
-            Trở về trang chủ
-          </button>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
       </div>
     );
+  }
+
+  if (!configured) {
+    return null;
   }
 
   if (loading) {
@@ -210,13 +198,11 @@ export default function Admin() {
         <div className="max-w-md w-full bg-white/[0.02] backdrop-blur-xl border border-white/10 p-8 sm:p-12 relative z-10">
           <div className="mb-8 text-center">
             <p className="text-amber-500 text-[10px] sm:text-xs font-mono tracking-widest mb-4 uppercase">— QUẢN TRỊ VIÊN</p>
-            <h1 className="text-3xl font-black font-display tracking-widest uppercase">
-              ĐĂNG NHẬP <span className="text-transparent" style={{ WebkitTextStroke: "1px rgba(255,255,255,0.4)" }}>HỆ THỐNG</span>
+            <h1 className="text-2xl sm:text-3xl font-black font-display tracking-[0.16em] uppercase leading-tight break-words">
+              ĐĂNG NHẬP
+              <br />
+              <span className="text-transparent" style={{ WebkitTextStroke: "1px rgba(255,255,255,0.4)" }}>HỆ THỐNG</span>
             </h1>
-          </div>
-
-          <div className="mb-6 rounded border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-[11px] font-mono tracking-[0.2em] text-amber-400 uppercase">
-            Mỗi lần truy cập admin đều yêu cầu đăng nhập lại.
           </div>
 
           <form onSubmit={handleAuth} className="space-y-6">
@@ -233,14 +219,24 @@ export default function Admin() {
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-[10px] font-mono tracking-widest text-gray-400 uppercase">Mật khẩu</label>
-              <input
-                type="password"
-                required
-                value={authPassword}
-                onChange={e => setAuthPassword(e.target.value)}
-                className="bg-black/50 border border-white/10 p-3 text-sm focus:border-amber-500 focus:bg-amber-500/5 focus:outline-none transition-all placeholder-gray-700"
-                placeholder="••••••••"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={authPassword}
+                  onChange={e => setAuthPassword(e.target.value)}
+                  className="w-full bg-black/50 border border-white/10 p-3 pr-12 text-sm focus:border-amber-500 focus:bg-amber-500/5 focus:outline-none transition-all placeholder-gray-700"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(prev => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-amber-500 transition-colors"
+                  aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             {authError && (

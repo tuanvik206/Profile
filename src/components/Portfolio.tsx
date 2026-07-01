@@ -3,7 +3,7 @@ import { motion, AnimatePresence, Variants, useMotionValue, useSpring, useTransf
 import { useEffect, useState } from "react";
 import Background from "./Background";
 import { supabase } from "../lib/supabase";
-import { normalizeSiteInfo } from "../lib/security";
+import { normalizeSiteInfo, SITE_INFO_SELECT_FIELDS } from "../lib/security";
 import { SiteInfo } from "../types";
 
 // Fallback icon for TikTok/Discord or anything missing
@@ -69,7 +69,7 @@ export default function Portfolio() {
 
       const { data, error } = await supabase
         .from('site_info')
-        .select('*')
+        .select(SITE_INFO_SELECT_FIELDS)
         .single();
 
       if (error && error.code !== 'PGRST116') {

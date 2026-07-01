@@ -2,6 +2,30 @@ import { SiteInfo } from '../types';
 
 const DEFAULT_TEXT_LIMIT = 200;
 
+export const SITE_INFO_COMPATIBLE_FIELDS = [
+    'id',
+    'name',
+    'avatar_url',
+    'project_link',
+    'education_school',
+    'education_major',
+    'education_years',
+    'facebook_url',
+    'instagram_url',
+    'github_url',
+    'email',
+    'linkedin_url',
+    'twitter_url',
+    'youtube_url',
+    'tiktok_url',
+    'dribbble_url',
+    'behance_url',
+    'twitch_url',
+    'discord_url',
+] as const;
+
+export const SITE_INFO_SELECT_FIELDS = SITE_INFO_COMPATIBLE_FIELDS.join(',');
+
 function sanitizeText(value: string | undefined | null, maxLength = DEFAULT_TEXT_LIMIT): string {
     return String(value ?? '')
         .replace(/[\u0000-\u001F\u007F]/g, '')
@@ -80,4 +104,18 @@ export function normalizeSiteInfo(info: Partial<SiteInfo> | null | undefined): P
     if (typeof safe.discord_url === 'string') normalized.discord_url = sanitizeUrl(safe.discord_url) || '';
 
     return normalized;
+}
+
+export function buildSafeSiteInfoPayload(info: Partial<SiteInfo> | null | undefined): Partial<SiteInfo> {
+    const normalized = normalizeSiteInfo(info);
+    const payload: Partial<SiteInfo> = {};
+    const allowedKeys = new Set<string>(SITE_INFO_COMPATIBLE_FIELDS as readonly string[]);
+
+    Object.entries(normalized).forEach(([key, value]) => {
+        if (allowedKeys.has(key)) {
+            (payload as Record<string, unknown>)[key] = value;
+        }
+    });
+
+    return payload;
 }
