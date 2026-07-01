@@ -135,6 +135,23 @@ export default function Portfolio() {
   const [firstName, ...lastNameParts] = (info.name || 'ANH TUẤN').split(' ');
   const lastName = lastNameParts.join(' ');
 
+  useEffect(() => {
+    const defaultAvatarUrl = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop';
+    const avatarUrl = info.avatar_url || defaultAvatarUrl;
+
+    document.title = info.name || 'ANH TUẤN';
+
+    let favicon = document.querySelector("link[rel='icon']") as HTMLLinkElement | null;
+    if (!favicon) {
+      favicon = document.createElement('link');
+      favicon.rel = 'icon';
+      document.head.appendChild(favicon);
+    }
+
+    favicon.href = avatarUrl;
+    favicon.type = 'image/jpeg';
+  }, [info.avatar_url, info.name]);
+
   return (
     <>
       <AnimatePresence>
