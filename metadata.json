@@ -1,0 +1,6 @@
+{
+  "name": "Tuấn - Portfolio",
+  "description": "Trang web cá nhân đơn giản, độc lạ với hiệu ứng chuyển động.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
