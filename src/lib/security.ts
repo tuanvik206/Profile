@@ -22,6 +22,9 @@ export const SITE_INFO_COMPATIBLE_FIELDS = [
     'behance_url',
     'twitch_url',
     'discord_url',
+    'location_name',
+    'location_coordinates',
+    'est_label',
 ] as const;
 
 export const SITE_INFO_SELECT_FIELDS = SITE_INFO_COMPATIBLE_FIELDS.join(',');
