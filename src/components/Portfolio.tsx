@@ -52,16 +52,16 @@ export default function Portfolio() {
       if (!supabase) {
         // Fallback data if Supabase is not configured
         setSiteInfo({
-          name: "ANH TUẤN",
-          avatar_url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop",
-          project_link: "https://tradiemlms.click/",
-          education_school: "TRƯỜNG ĐẠI HỌC CÔNG NGHỆ THÔNG TIN VÀ TRUYỀN THÔNG",
-          education_major: "CÔNG NGHỆ THÔNG TIN",
-          education_years: "2024 - 2028",
-          facebook_url: "#",
-          instagram_url: "#",
-          github_url: "#",
-          email: "mailto:tuanaraoo@gmail.com"
+          name: "",
+          avatar_url: "",
+          project_link: "",
+          education_school: "",
+          education_major: "",
+          education_years: "",
+          facebook_url: "",
+          instagram_url: "",
+          github_url: "",
+          email: ""
         });
         setLoading(false);
         return;
@@ -75,7 +75,7 @@ export default function Portfolio() {
       if (error && error.code !== 'PGRST116') {
         console.error("Error fetching site info:", error.message || error);
       } else if (data) {
-        const normalized = normalizeSiteInfo(data as SiteInfo);
+        const normalized = normalizeSiteInfo((data as Partial<SiteInfo> | null) ?? null);
         setSiteInfo(normalized as SiteInfo);
       }
     } catch (err) {
@@ -84,16 +84,16 @@ export default function Portfolio() {
   };
 
   const info = normalizeSiteInfo(siteInfo || {
-    name: "ANH TUẤN",
-    avatar_url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop",
-    project_link: "https://tradiemlms.click/",
-    education_school: "TRƯỜNG ĐẠI HỌC CÔNG NGHỆ THÔNG TIN VÀ TRUYỀN THÔNG",
-    education_major: "CÔNG NGHỆ THÔNG TIN",
-    education_years: "2024 - 2028",
-    facebook_url: "#",
-    instagram_url: "#",
-    github_url: "#",
-    email: "mailto:tuanaraoo@gmail.com"
+    name: "",
+    avatar_url: "",
+    project_link: "",
+    education_school: "",
+    education_major: "",
+    education_years: "",
+    facebook_url: "",
+    instagram_url: "",
+    github_url: "",
+    email: ""
   }) as SiteInfo;
 
   const socialLinks = [
@@ -132,14 +132,13 @@ export default function Portfolio() {
     }
   };
 
-  const [firstName, ...lastNameParts] = (info.name || 'ANH TUẤN').split(' ');
+  const [firstName, ...lastNameParts] = (info.name || '').split(' ');
   const lastName = lastNameParts.join(' ');
 
   useEffect(() => {
-    const defaultAvatarUrl = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop';
-    const avatarUrl = info.avatar_url || defaultAvatarUrl;
+    const avatarUrl = info.avatar_url || '';
 
-    document.title = info.name || 'ANH TUẤN';
+    document.title = info.name || 'Portfolio';
 
     let favicon = document.querySelector("link[rel='icon']") as HTMLLinkElement | null;
     if (!favicon) {
@@ -148,8 +147,8 @@ export default function Portfolio() {
       document.head.appendChild(favicon);
     }
 
-    favicon.href = avatarUrl;
-    favicon.type = 'image/jpeg';
+    favicon.href = avatarUrl || '/favicon.svg';
+    favicon.type = avatarUrl ? 'image/jpeg' : 'image/svg+xml';
   }, [info.avatar_url, info.name]);
 
   return (
@@ -214,10 +213,12 @@ export default function Portfolio() {
                 <div className="text-[10px] tracking-widest text-gray-500">{info.est_label || 'EST. 2026'}</div>
               </div>
 
-              <div className="absolute top-6 right-6 sm:top-12 sm:right-12 flex flex-col items-end gap-4 -z-10">
-                <div className="text-right">
-                  <p className="text-[10px] tracking-widest text-gray-500 uppercase">{info.location_name || 'Việt Nam'}</p>
-                  <p className="hidden sm:block text-[10px] tracking-widest text-gray-700 uppercase">{info.location_coordinates || '14.0583° N, 108.2772° E'}</p>
+              <div className="absolute top-6 right-6 sm:top-12 sm:right-12 flex flex-col items-end gap-2 -z-10">
+                <div className="text-right max-w-[140px] sm:max-w-none">
+                  <p className="text-[10px] tracking-widest text-gray-500 uppercase leading-tight">{info.location_name || ''}</p>
+                  <p className="mt-1 text-[9px] sm:text-[10px] tracking-widest text-gray-700 uppercase leading-tight">
+                    {info.location_coordinates || ''}
+                  </p>
                 </div>
               </div>
             </motion.div>
@@ -276,7 +277,7 @@ export default function Portfolio() {
                     >
                       <div className="w-full h-full p-1 border-2 border-amber-500/50 group-hover:border-amber-500 transition-colors duration-700 ease-out shadow-[0_0_15px_rgba(245,158,11,0.2)] group-hover:shadow-[0_0_30px_rgba(245,158,11,0.4)]">
                         <img
-                          src={info.avatar_url || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop"}
+                          src={info.avatar_url || ""}
                           alt="Avatar"
                           className="w-full h-full object-cover contrast-110 saturate-110 transition-transform duration-700 ease-out"
                         />
