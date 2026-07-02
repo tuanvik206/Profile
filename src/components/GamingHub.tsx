@@ -591,7 +591,7 @@ export default function GamingHub({ isOpen, onClose }: GamingHubProps) {
                             <div className="h-24 sm:h-16 flex items-center justify-center p-1 relative mt-3 sm:mt-1 select-none shrink-0">
                               {skin.skinIcon ? (
                                 <img src={skin.skinIcon} alt={skin.skinName}
-                                  className="max-w-full max-h-full object-contain scale-[1.35] sm:scale-100 group-hover:scale-[1.45] sm:group-hover:scale-105 transition-transform duration-500 drop-shadow-[0_10px_10px_rgba(0,0,0,0.6)] group-hover:drop-shadow-[0_15px_15px_rgba(245,158,11,0.2)]"
+                                  className="max-w-full max-h-full object-contain scale-[1.05] sm:scale-100 group-hover:scale-[1.12] sm:group-hover:scale-105 transition-transform duration-500 drop-shadow-[0_10px_10px_rgba(0,0,0,0.6)] group-hover:drop-shadow-[0_15px_15px_rgba(245,158,11,0.2)]"
                                   referrerPolicy="no-referrer" />
                               ) : (
                                 <div className="text-[9px] font-mono text-gray-500 uppercase">{t('unknown')}</div>
