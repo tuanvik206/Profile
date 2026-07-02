@@ -554,7 +554,7 @@ export default function GamingHub({ isOpen, onClose }: GamingHubProps) {
                 </div>
 
                 {/* ── RIGHT COLUMN: Skin Collection ── */}
-                <div className="flex-1 min-w-0 overflow-x-hidden lg:overflow-y-auto custom-scrollbar">
+                <div className="w-full lg:flex-1 min-w-0 shrink-0 lg:shrink overflow-x-hidden lg:overflow-y-auto custom-scrollbar">
                   <div className="border border-white/10 bg-white/[0.01] p-5 sm:p-6">
                     <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
                       <div>
