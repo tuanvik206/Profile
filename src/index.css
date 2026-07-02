@@ -13,63 +13,80 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-y: scroll;
+  overflow-x: hidden;
 }
 
-/* Custom Scrollbar matching Amber theme */
+html {
+  overflow-x: hidden;
+}
+
+/* ─── Global scrollbar (body page scroll) ─── */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 3px;
+  height: 3px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.02);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(245, 158, 11, 0.2);
-  border-radius: 10px;
+  background: rgba(245, 158, 11, 0.15);
+  border-radius: 9999px;
+  transition: background 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(245, 158, 11, 0.5);
+  background: rgba(245, 158, 11, 0.45);
 }
 
+/* ─── Custom scrollbar: ẩn mặc định, hiện khi hover ─── */
 .custom-scrollbar {
-  scrollbar-width: none; /* Firefox - Ẩn mặc định */
-  -ms-overflow-style: none; /* IE/Edge - Ẩn mặc định */
+  /* Firefox */
+  scrollbar-width: none;
+  scrollbar-color: transparent transparent;
+  /* Overlay scrollbar (Webkit) — không đẩy layout */
 }
 
 .custom-scrollbar:hover {
-  scrollbar-width: thin; /* Firefox - Hiện khi hover */
-  scrollbar-color: rgba(245, 158, 11, 0.25) transparent;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(245, 158, 11, 0.3) transparent;
 }
 
+/* Webkit: ẩn track hoàn toàn */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 2px;
+  height: 2px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
 
+/* Ẩn hoàn toàn thumb mặc định */
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: transparent; /* Webkit - Ẩn mặc định */
+  background: rgba(0, 0, 0, 0);
   border-radius: 9999px;
+  transition: background 0.4s ease;
 }
 
+/* Hiện khi hover vào container */
 .custom-scrollbar:hover::-webkit-scrollbar-thumb {
-  background: rgba(245, 158, 11, 0.25); /* Webkit - Hiện khi hover */
+  background: rgba(245, 158, 11, 0.28);
 }
 
+/* Sáng hơn khi hover trực tiếp lên thumb */
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(245, 158, 11, 0.6) !important;
 }
 
+/* ─── no-scrollbar: ẩn hoàn toàn ─── */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
