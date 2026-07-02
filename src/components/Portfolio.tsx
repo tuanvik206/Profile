@@ -320,7 +320,7 @@ export default function Portfolio() {
         )}
       </AnimatePresence>
 
-      <main className="relative min-h-screen flex items-center justify-center p-4 sm:p-8 font-sans overflow-hidden text-white bg-transparent pointer-events-none">
+      <main className="relative min-h-screen flex flex-col items-center justify-center p-4 sm:p-8 font-sans overflow-hidden text-white bg-transparent pointer-events-none">
         {/* Animated Background Engine */}
         <div className="pointer-events-auto">
           <Background />
@@ -333,10 +333,36 @@ export default function Portfolio() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 1, delay: 0.2 }}
-              className="absolute inset-0 pointer-events-none"
+              className="w-full max-w-[800px] pointer-events-none flex flex-col"
             >
-              {/* Peripheral HUD Elements */}
-              <div className="flex absolute top-4 left-4 sm:top-12 sm:left-12 flex-col gap-2 z-50 pointer-events-auto">
+              {/* Mobile Header Row (Visible on mobile/tablet, hidden on desktop) */}
+              <div className="w-full flex md:hidden items-center justify-between px-2 pb-4 pt-2 z-50 pointer-events-auto border-b border-white/5 mb-4 shrink-0">
+                <div className="flex flex-col gap-1">
+                  <div className="text-[9px] tracking-widest text-gray-500 uppercase">EST. {info.est_year || '2026'}</div>
+                  <div className="flex items-center gap-1.5 text-[9px] tracking-widest font-mono">
+                    <button
+                      onClick={() => setLanguage('vi')}
+                      className={`transition-colors uppercase ${language === 'vi' ? 'text-amber-500' : 'text-gray-500 hover:text-white'}`}
+                    >
+                      VI
+                    </button>
+                    <span className="text-gray-700">|</span>
+                    <button
+                      onClick={() => setLanguage('en')}
+                      className={`transition-colors uppercase ${language === 'en' ? 'text-amber-500' : 'text-gray-500 hover:text-white'}`}
+                    >
+                      EN
+                    </button>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-[9px] tracking-widest text-gray-500 uppercase">{info.location_text || t('location')}</p>
+                  <p className="text-[8px] tracking-widest text-gray-700 uppercase mt-0.5">{info.coordinates || '14.0583° N, 108.2772° E'}</p>
+                </div>
+              </div>
+
+              {/* Desktop HUD Elements (Hidden on mobile) */}
+              <div className="hidden md:flex absolute top-12 left-12 flex-col gap-2 z-50 pointer-events-auto">
                 <div className="w-4 h-4 border border-white/20"></div>
                 <div className="text-[10px] tracking-widest text-gray-500">EST. {info.est_year || '2026'}</div>
                 <div className="flex items-center gap-2 mt-4 text-[10px] tracking-widest font-mono">
@@ -356,10 +382,10 @@ export default function Portfolio() {
                 </div>
               </div>
 
-              <div className="absolute top-6 right-6 sm:top-12 sm:right-12 flex flex-col items-end gap-4 -z-10">
+              <div className="hidden md:flex absolute top-12 right-12 flex-col items-end gap-4 z-50 pointer-events-auto">
                 <div className="text-right">
                   <p className="text-[10px] tracking-widest text-gray-500 uppercase">{info.location_text || t('location')}</p>
-                  <p className="hidden sm:block text-[10px] tracking-widest text-gray-700 uppercase">{info.coordinates || '14.0583° N, 108.2772° E'}</p>
+                  <p className="text-[10px] tracking-widest text-gray-700 uppercase mt-1">{info.coordinates || '14.0583° N, 108.2772° E'}</p>
                 </div>
               </div>
             </motion.div>
