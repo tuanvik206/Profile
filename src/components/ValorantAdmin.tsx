@@ -624,7 +624,9 @@ export default function ValorantAdmin() {
                         const newSkin = {
                           weaponName: s.weaponName || "Unknown",
                           skinName: s.skinName,
-                          skinIcon: s.skinIcon
+                          skinIcon: s.skinIcon,
+                          skinUuid: s.skinUuid || "",
+                          englishName: s.englishName || s.skinName
                         };
                         setValProfile({
                           ...valProfile,
