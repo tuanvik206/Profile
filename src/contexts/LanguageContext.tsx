@@ -78,7 +78,7 @@ const translations = {
     'education_school_default': 'TRƯỜNG ĐẠI HỌC CÔNG NGHỆ THÔNG TIN VÀ TRUYỀN THÔNG',
     'education_major_default': 'CÔNG NGHỆ THÔNG TIN',
     'education_years_default': '2024 - 2028',
-    'education_desc_default': 'Một chút giới thiệu về hành trình học tập của tôi.',
+    'education_desc_default': '',
     'loading': 'Đang tải...',
     'val_stats_header': 'Chỉ số thi đấu (Stats)',
     'val_kd_ratio': 'K/D Ratio',
@@ -178,7 +178,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [language]);
 
   const t = (key: string): string => {
-    return (translations[language] as Record<string, string>)[key] || key;
+    const dict = translations[language] as Record<string, string>;
+    return key in dict ? dict[key] : key;
   };
 
   return (

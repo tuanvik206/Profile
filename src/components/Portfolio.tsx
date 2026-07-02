@@ -597,9 +597,10 @@ export default function Portfolio() {
                     <div className="flex flex-col gap-3 w-full items-center sm:items-start">
                       <motion.div
                         variants={itemVariants}
-                        whileHover={{ scale: 1.02, x: 5, backgroundColor: "rgba(156,163,175,0.05)" }}
+                        onClick={() => setShowEducationPopup(true)}
+                        whileHover={{ scale: 1.02, x: 5, backgroundColor: "rgba(245,158,11,0.05)", borderColor: "rgba(245,158,11,0.4)" }}
                         transition={{ duration: 0.3, ease: "easeOut" }}
-                        className="px-3 sm:px-4 py-2.5 sm:py-3 text-[9px] sm:text-[10px] md:text-xs font-tech uppercase tracking-widest text-white border border-white/10 bg-white/[0.02] hover:border-white/20 transition-colors cursor-default w-full sm:w-auto text-center sm:text-left"
+                        className="px-3 sm:px-4 py-2.5 sm:py-3 text-[9px] sm:text-[10px] md:text-xs font-tech uppercase tracking-widest text-white border border-white/10 bg-white/[0.02] hover:border-white/20 transition-all cursor-pointer w-full sm:w-auto text-center sm:text-left"
                       >
                         {educationSchool}
                       </motion.div>
@@ -607,17 +608,19 @@ export default function Portfolio() {
                       <div className="flex flex-row flex-wrap justify-center sm:justify-start gap-3 w-full sm:w-auto">
                         <motion.div
                           variants={itemVariants}
-                          whileHover={{ scale: 1.05, backgroundColor: "rgba(156,163,175,0.05)" }}
+                          onClick={() => setShowEducationPopup(true)}
+                          whileHover={{ scale: 1.05, backgroundColor: "rgba(245,158,11,0.05)", borderColor: "rgba(245,158,11,0.4)", color: "#fff" }}
                           transition={{ duration: 0.3, ease: "easeOut" }}
-                          className="px-3 sm:px-4 py-2.5 sm:py-3 text-[9px] sm:text-[10px] md:text-xs uppercase font-tech tracking-widest text-amber-500 border border-white/10 bg-white/[0.02] cursor-default text-center sm:text-left transition-colors"
+                          className="px-3 sm:px-4 py-2.5 sm:py-3 text-[9px] sm:text-[10px] md:text-xs uppercase font-tech tracking-widest text-amber-500 border border-white/10 bg-white/[0.02] cursor-pointer text-center sm:text-left transition-all"
                         >
                           {educationMajor}
                         </motion.div>
                         <motion.div
                           variants={itemVariants}
-                          whileHover={{ scale: 1.05, color: "#fff", backgroundColor: "rgba(156,163,175,0.05)" }}
+                          onClick={() => setShowEducationPopup(true)}
+                          whileHover={{ scale: 1.05, color: "#fff", backgroundColor: "rgba(245,158,11,0.05)", borderColor: "rgba(245,158,11,0.4)" }}
                           transition={{ duration: 0.3, ease: "easeOut" }}
-                          className="px-3 sm:px-4 py-2.5 sm:py-3 text-[9px] sm:text-[10px] md:text-xs uppercase tracking-widest text-white border border-white/10 bg-white/[0.02] cursor-default whitespace-nowrap transition-colors"
+                          className="px-3 sm:px-4 py-2.5 sm:py-3 text-[9px] sm:text-[10px] md:text-xs uppercase tracking-widest text-white border border-white/10 bg-white/[0.02] cursor-pointer whitespace-nowrap transition-all"
                         >
                           {educationYears}
                         </motion.div>
