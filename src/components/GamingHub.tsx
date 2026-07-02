@@ -458,10 +458,10 @@ export default function GamingHub({ isOpen, onClose }: GamingHubProps) {
               </div>
             ) : activeTab === "valProfile" ? (
               // TAB 2: VALORANT PLAYER PROFILE (EDITABLE/ADDABLE)
-              <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-0 overflow-hidden">
-                {/* Left Column: Player Identity Card - scrollable on all screens */}
-                <div className="w-full lg:w-[350px] xl:w-[400px] shrink-0 flex flex-col overflow-y-auto custom-scrollbar pr-1 pb-2">
-                  <div className="border border-white/10 bg-white/[0.01] p-5 sm:p-6 relative overflow-hidden flex flex-col justify-start gap-5 group">
+              <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-0 overflow-y-auto lg:overflow-hidden custom-scrollbar pr-1 pb-2">
+                {/* Left Column: Player Identity Card - scrollable on lg+ independently */}
+                <div className="w-full lg:w-[350px] xl:w-[400px] shrink-0 flex flex-col lg:overflow-y-auto lg:custom-scrollbar lg:pr-1 lg:pb-2">
+                  <div className="border border-white/10 bg-white/[0.01] p-5 sm:p-6 relative flex flex-col justify-start gap-5 group overflow-visible">
                     {/* Decorative cyber line */}
                     <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-amber-500 via-yellow-500 to-transparent"></div>
 
