@@ -457,106 +457,93 @@ export default function GamingHub({ isOpen, onClose }: GamingHubProps) {
                 ))}
               </div>
             ) : activeTab === "valProfile" ? (
-              // TAB 2: VALORANT PLAYER PROFILE (EDITABLE/ADDABLE)
-              <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-0 overflow-y-auto lg:overflow-hidden custom-scrollbar pr-1 pb-2">
-                {/* Left Column: Player Identity Card - scrollable on lg+ independently */}
-                <div className="w-full lg:w-[350px] xl:w-[400px] shrink-0 flex flex-col lg:overflow-y-auto lg:custom-scrollbar lg:pr-1 lg:pb-2">
-                  <div className="border border-white/10 bg-white/[0.01] p-5 sm:p-6 relative flex flex-col justify-start gap-5 group overflow-visible">
-                    {/* Decorative cyber line */}
-                    <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-amber-500 via-yellow-500 to-transparent"></div>
+              // TAB 2: VALORANT PLAYER PROFILE
+              // Mobile: outer scrolls (flex-col). Desktop lg+: each column scrolls independently (flex-row, outer overflow-y-hidden)
+              <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-6 overflow-x-hidden overflow-y-auto lg:overflow-y-hidden custom-scrollbar">
 
-                    {/* Background Subtle Logo */}
+                {/* ── LEFT COLUMN: Player Identity Card ── */}
+                <div className="w-full lg:w-[350px] xl:w-[400px] shrink-0 overflow-x-hidden lg:overflow-y-auto custom-scrollbar">
+                  <div className="border border-white/10 bg-white/[0.01] p-5 sm:p-6 relative flex flex-col gap-5">
+                    {/* Decorative top line */}
+                    <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-amber-500 via-yellow-500 to-transparent" />
+                    {/* Bg logo */}
                     <div className="absolute -bottom-8 -right-8 w-40 h-40 opacity-5 pointer-events-none">
-                      <svg viewBox="0 0 100 100" className="w-full h-full text-white fill-current">
-                        <path d="M10 30 L50 10 L90 30 L50 90 Z" />
-                      </svg>
+                      <svg viewBox="0 0 100 100" className="w-full h-full text-white fill-current"><path d="M10 30 L50 10 L90 30 L50 90 Z" /></svg>
                     </div>
 
-                    <div className="space-y-4">
-                      {/* Ingame Name Header */}
+                    {/* Ingame Name */}
+                    <div>
+                      <span className="text-[8px] font-mono tracking-widest text-amber-500 uppercase">{t('agent_profile_header')}</span>
+                      <h3 className="text-2xl sm:text-3xl font-display font-black tracking-widest text-white mt-1 uppercase break-all">
+                        {valProfile.ingameName}
+                      </h3>
+                    </div>
+
+                    {/* Level & Server */}
+                    <div className="grid grid-cols-2 gap-4 pt-3 border-t border-white/5">
                       <div>
-                        <span className="text-[8px] font-mono tracking-widest text-amber-500 uppercase">{t('agent_profile_header')}</span>
-                        <h3 className="text-2xl sm:text-3xl font-display font-black tracking-widest text-white mt-1 uppercase break-all">
-                          {valProfile.ingameName}
-                        </h3>
+                        <span className="text-[8px] font-mono tracking-widest text-gray-500 uppercase">{t('level')}</span>
+                        <p className="text-sm font-mono text-amber-500 font-bold mt-0.5">{valProfile.level}</p>
                       </div>
-
-                      {/* Level and Server */}
-                      <div className="grid grid-cols-2 gap-4 pt-3 border-t border-white/5">
-                        <div>
-                          <span className="text-[8px] font-mono tracking-widest text-gray-500 uppercase">{t('level')}</span>
-                          <p className="text-sm font-mono text-amber-500 font-bold mt-0.5">{valProfile.level}</p>
-                        </div>
-                        <div>
-                          <span className="text-[8px] font-mono tracking-widest text-gray-500 uppercase">{t('server')}</span>
-                          <p className="text-xs font-mono text-gray-300 font-medium mt-0.5 truncate">{valProfile.server}</p>
-                        </div>
-                      </div>
-
-                      {/* Rank Section */}
-                      <div className="pt-3.5 border-t border-white/5 flex items-center gap-4">
-                        <div className="w-14 h-14 shrink-0 bg-black/40 border border-white/10 flex items-center justify-center relative rounded-sm p-1">
-                          <div className="absolute inset-0 bg-amber-500/5 blur-md"></div>
-                          {valProfile.rankIcon ? (
-                            <img
-                              src={valProfile.rankIcon}
-                              alt={valProfile.rankName}
-                              className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_8px_rgba(245,158,11,0.3)]"
-                              referrerPolicy="no-referrer"
-                            />
-                          ) : (
-                            <div className="text-[10px] font-mono text-gray-500">RANK</div>
-                          )}
-                        </div>
-                        <div>
-                          <span className="text-[8px] font-mono tracking-widest text-gray-500 uppercase">{t('current_rank')}</span>
-                          <p className="text-base font-bold tracking-wider uppercase text-white mt-0.5">{valProfile.rankName}</p>
-                          <span className="text-[8px] font-mono text-amber-500/80 uppercase">{t('competitive_system')}</span>
-                        </div>
+                      <div>
+                        <span className="text-[8px] font-mono tracking-widest text-gray-500 uppercase">{t('server')}</span>
+                        <p className="text-xs font-mono text-gray-300 font-medium mt-0.5 truncate">{valProfile.server}</p>
                       </div>
                     </div>
 
-                    {/* Stats Block (Tỷ lệ K/D, Thắng, Headshot, Số trận) */}
+                    {/* Rank */}
+                    <div className="pt-3.5 border-t border-white/5 flex items-center gap-4">
+                      <div className="w-14 h-14 shrink-0 bg-black/40 border border-white/10 flex items-center justify-center relative rounded-sm p-1">
+                        <div className="absolute inset-0 bg-amber-500/5 blur-md" />
+                        {valProfile.rankIcon ? (
+                          <img src={valProfile.rankIcon} alt={valProfile.rankName}
+                            className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_8px_rgba(245,158,11,0.3)]"
+                            referrerPolicy="no-referrer" />
+                        ) : (
+                          <div className="text-[10px] font-mono text-gray-500">RANK</div>
+                        )}
+                      </div>
+                      <div>
+                        <span className="text-[8px] font-mono tracking-widest text-gray-500 uppercase">{t('current_rank')}</span>
+                        <p className="text-base font-bold tracking-wider uppercase text-white mt-0.5">{valProfile.rankName}</p>
+                        <span className="text-[8px] font-mono text-amber-500/80 uppercase">{t('competitive_system')}</span>
+                      </div>
+                    </div>
+
+                    {/* Stats */}
                     <div className="pt-4 border-t border-white/5 space-y-2">
-                      <span className="text-[8px] font-mono tracking-widest text-gray-500 uppercase">{t('val_stats_header')}</span>
+                      <span className="text-[9px] font-mono tracking-widest text-gray-500 uppercase">{t('val_stats_header')}</span>
                       <div className="grid grid-cols-2 gap-2">
-                        <div className="bg-white/[0.02] border border-white/5 p-2 rounded-sm text-center hover:border-amber-500/20 transition-colors">
-                          <span className="text-[7px] font-mono text-gray-500 uppercase block">{t('val_kd_ratio')}</span>
-                          <span className="text-xs font-mono text-white font-bold block mt-0.5">{valProfile.kd || "1.15"}</span>
-                        </div>
-                        <div className="bg-white/[0.02] border border-white/5 p-2 rounded-sm text-center hover:border-amber-500/20 transition-colors">
-                          <span className="text-[7px] font-mono text-gray-500 uppercase block">{t('val_win_rate')}</span>
-                          <span className="text-xs font-mono text-white font-bold block mt-0.5">{valProfile.winrate || "53.2%"}</span>
-                        </div>
-                        <div className="bg-white/[0.02] border border-white/5 p-2 rounded-sm text-center hover:border-amber-500/20 transition-colors">
-                          <span className="text-[7px] font-mono text-gray-500 uppercase block">{t('val_headshot')}</span>
-                          <span className="text-xs font-mono text-white font-bold block mt-0.5">{valProfile.headshot || "22.5%"}</span>
-                        </div>
-                        <div className="bg-white/[0.02] border border-white/5 p-2 rounded-sm text-center hover:border-amber-500/20 transition-colors">
-                          <span className="text-[7px] font-mono text-gray-500 uppercase block">{t('val_matches')}</span>
-                          <span className="text-xs font-mono text-white font-bold block mt-0.5">{valProfile.matchesPlayed || "5"}</span>
-                        </div>
+                        {[
+                          { label: t('val_kd_ratio'), value: valProfile.kd || "1.15", color: "text-white" },
+                          { label: t('val_win_rate'), value: valProfile.winrate || "53.2%", color: "text-white" },
+                          { label: t('val_headshot'), value: valProfile.headshot || "22.5%", color: "text-white" },
+                          { label: t('val_matches'), value: valProfile.matchesPlayed || "5", color: "text-amber-500" },
+                        ].map((stat, i) => (
+                          <div key={i} className="bg-white/[0.02] border border-white/5 p-3 rounded-sm text-center hover:border-amber-500/20 transition-colors">
+                            <span className="text-[9px] font-mono text-gray-500 uppercase block">{stat.label}</span>
+                            <span className={`text-sm font-mono font-bold block mt-1 ${stat.color}`}>{stat.value}</span>
+                          </div>
+                        ))}
                       </div>
                     </div>
 
-                    {/* Main Agents */}
-                    <div className="mt-6 pt-4 border-t border-white/5 space-y-2">
-                      <span className="text-[8px] font-mono tracking-widest text-gray-500 uppercase">{t('main_agents')}</span>
-                      <div className="flex gap-4 overflow-x-auto custom-scrollbar pb-2">
+                    {/* Main Agents — hiện thanh cuộn ngang khi hover */}
+                    <div className="pt-4 border-t border-white/5 space-y-2">
+                      <span className="text-[9px] font-mono tracking-widest text-gray-500 uppercase">{t('main_agents')}</span>
+                      <div className="flex gap-3 overflow-x-auto custom-scrollbar pb-1.5">
                         {valProfile.mainAgentUuids?.map((uuid, idx) => {
                           const agent = apiAgents.find(a => a.uuid === uuid) || agents.find(a => a.uuid === uuid);
                           return (
-                            <div key={idx} className="flex-1 min-w-[120px] flex items-center gap-2 p-1.5 bg-white/[0.02] border border-white/5 rounded-sm shrink-0">
-                              <div className="w-8 h-8 bg-black/40 border border-white/10 rounded-sm shrink-0 flex items-center justify-center">
-                                {agent?.displayIcon ? (
-                                  <img src={agent.displayIcon} alt={agent.displayName} className="w-full h-full object-contain" referrerPolicy="no-referrer" />
-                                ) : (
-                                  <span className="text-[8px] font-mono text-gray-500">?</span>
-                                )}
+                            <div key={idx} className="flex items-center gap-3 p-2.5 bg-white/[0.02] border border-white/5 rounded-sm hover:border-amber-500/20 transition-colors shrink-0 min-w-[130px]">
+                              <div className="w-10 h-10 bg-black/40 border border-white/10 rounded-sm shrink-0 flex items-center justify-center">
+                                {agent?.displayIcon
+                                  ? <img src={agent.displayIcon} alt={agent.displayName} className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+                                  : <span className="text-[9px] font-mono text-gray-500">?</span>}
                               </div>
-                              <div className="min-w-0">
-                                <p className="text-[9px] font-bold text-white uppercase truncate">{agent?.displayName || t('loading')}</p>
-                                <p className="text-[7px] font-mono text-gray-500 uppercase truncate">{agent?.role?.displayName || "ROLE"}</p>
+                              <div className="min-w-0 overflow-hidden">
+                                <p className="text-[11px] font-bold text-white uppercase truncate">{agent?.displayName || t('loading')}</p>
+                                <p className="text-[9px] font-mono text-gray-500 uppercase truncate">{agent?.role?.displayName || "ROLE"}</p>
                               </div>
                             </div>
                           );
@@ -565,11 +552,11 @@ export default function GamingHub({ isOpen, onClose }: GamingHubProps) {
                     </div>
                   </div>
                 </div>
-                {/* Right Column: Dynamic Section */}
-                <div className="flex-1 flex flex-col min-h-0 overflow-y-auto lg:overflow-hidden">
-                  {/* SHOW WEAPON SKIN COLLECTION GRID */}
-                  <div className="flex-1 flex flex-col border border-white/10 bg-white/[0.01] p-5 sm:p-6 overflow-hidden min-h-0">
-                    <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3 shrink-0">
+
+                {/* ── RIGHT COLUMN: Skin Collection ── */}
+                <div className="flex-1 min-w-0 overflow-x-hidden lg:overflow-y-auto custom-scrollbar">
+                  <div className="border border-white/10 bg-white/[0.01] p-5 sm:p-6">
+                    <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
                       <div>
                         <span className="text-[8px] font-mono tracking-widest text-amber-500 uppercase">{t('gun_skins_showcase')}</span>
                         <h4 className="text-sm font-bold tracking-wider text-white mt-0.5 uppercase">{t('favorite_collection')}</h4>
@@ -579,7 +566,7 @@ export default function GamingHub({ isOpen, onClose }: GamingHubProps) {
                       </span>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto pr-1 grid grid-cols-1 sm:grid-cols-2 content-start gap-4 pb-2 custom-scrollbar">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 content-start gap-4 pb-4">
                       {valProfile.favoriteSkins && valProfile.favoriteSkins.length > 0 ? (
                         valProfile.favoriteSkins.map((skin, idx) => (
                           <motion.div
@@ -589,33 +576,23 @@ export default function GamingHub({ isOpen, onClose }: GamingHubProps) {
                             transition={{ duration: 0.3, delay: idx * 0.05 }}
                             className="group p-4 bg-white/[0.02] border border-white/5 hover:border-amber-500/30 hover:bg-white/[0.04] transition-all duration-300 relative overflow-hidden flex flex-col justify-between min-h-[180px] sm:min-h-[140px]"
                           >
-                            {/* Background lighting effect */}
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/0 group-hover:bg-amber-500/[0.03] blur-xl rounded-full transition-all duration-500 pointer-events-none"></div>
-
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/0 group-hover:bg-amber-500/[0.03] blur-xl rounded-full transition-all duration-500 pointer-events-none" />
                             <div>
                               <div className="flex justify-between items-start gap-2 mb-1">
                                 <span className="text-[8px] font-mono tracking-widest text-amber-500 bg-amber-500/5 border border-amber-500/10 px-1.5 py-0.5 uppercase">
                                   {skin.weaponName && skin.weaponName !== "Unknown" ? skin.weaponName : (skin.skinName.split(' ')[0] || "WEAPON")}
                                 </span>
-                                <span className="text-[8px] font-mono text-gray-600">
-                                  #{idx + 1}
-                                </span>
+                                <span className="text-[8px] font-mono text-gray-600">#{idx + 1}</span>
                               </div>
-
                               <h5 className="text-[11px] font-bold text-white uppercase group-hover:text-amber-500 transition-colors tracking-wide truncate mt-1">
                                 {language === 'en' && skin.englishName ? skin.englishName : skin.skinName}
                               </h5>
                             </div>
-
-                            {/* Gun Skin Icon Display */}
                             <div className="h-24 sm:h-16 flex items-center justify-center p-1 relative mt-3 sm:mt-1 select-none shrink-0">
                               {skin.skinIcon ? (
-                                <img
-                                  src={skin.skinIcon}
-                                  alt={skin.skinName}
+                                <img src={skin.skinIcon} alt={skin.skinName}
                                   className="max-w-full max-h-full object-contain scale-[1.35] sm:scale-100 group-hover:scale-[1.45] sm:group-hover:scale-105 transition-transform duration-500 drop-shadow-[0_10px_10px_rgba(0,0,0,0.6)] group-hover:drop-shadow-[0_15px_15px_rgba(245,158,11,0.2)]"
-                                  referrerPolicy="no-referrer"
-                                />
+                                  referrerPolicy="no-referrer" />
                               ) : (
                                 <div className="text-[9px] font-mono text-gray-500 uppercase">{t('unknown')}</div>
                               )}
@@ -631,9 +608,9 @@ export default function GamingHub({ isOpen, onClose }: GamingHubProps) {
                     </div>
                   </div>
                 </div>
+
               </div>
             ) : (
-              // TAB 3: VALORANT API EXPLORER (CƠ SỞ DỮ LIỆU ĐẶC VỤ)
               <div className="flex-1 flex flex-col md:flex-row gap-6 min-h-0">
                 {agentsLoading ? (
                   <div className="flex-1 flex flex-col items-center justify-center gap-3">
