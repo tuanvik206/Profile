@@ -113,6 +113,7 @@ export default function ValorantAdmin() {
       let kd = valProfile.kd || "";
       let winrate = valProfile.winrate || "";
       let headshot = valProfile.headshot || "";
+      let matchesPlayed = valProfile.matchesPlayed || "";
 
       try {
         const matchesRes = await fetch(
@@ -169,6 +170,8 @@ export default function ValorantAdmin() {
               if (totalShots > 0) {
                 headshot = `${((totalHeadshots / totalShots) * 100).toFixed(1)}%`;
               }
+
+              matchesPlayed = String(matchesFound);
             }
           }
         } else {
@@ -189,12 +192,13 @@ export default function ValorantAdmin() {
         rankIcon,
         kd,
         winrate,
-        headshot
+        headshot,
+        matchesPlayed
       }));
 
       setStatus({
         type: 'success',
-        message: `Đồng bộ thành công! Level: ${level}, Rank: ${rankName}, K/D: ${kd}, Tỷ lệ thắng: ${winrate}, Headshot: ${headshot}. Hãy nhấn 'LƯU HỒ SƠ' để lưu vĩnh viễn!`
+        message: `Đồng bộ thành công! Level: ${level}, Rank: ${rankName}, K/D: ${kd}, Tỷ lệ thắng: ${winrate}, Headshot: ${headshot}, Số trận: ${matchesPlayed}. Hãy nhấn 'LƯU HỒ SƠ' để lưu vĩnh viễn!`
       });
 
       // Save key to localstorage if entered
@@ -455,7 +459,7 @@ export default function ValorantAdmin() {
 
         {/* Thêm các trường thống kê */}
         <div className="flex flex-col gap-2">
-          <label className="text-[9px] font-mono tracking-widest text-gray-400 uppercase">Tỷ lệ K/D (K/D Ratio)</label>
+          <label className="text-[9px] font-mono tracking-widest text-gray-400 uppercase">{t('val_kd_ratio')}</label>
           <input
             type="text"
             value={valProfile.kd || ''}
@@ -465,7 +469,7 @@ export default function ValorantAdmin() {
           />
         </div>
         <div className="flex flex-col gap-2">
-          <label className="text-[9px] font-mono tracking-widest text-gray-400 uppercase">Tỷ lệ Thắng (Win Rate %)</label>
+          <label className="text-[9px] font-mono tracking-widest text-gray-400 uppercase">{t('val_win_rate')}</label>
           <input
             type="text"
             value={valProfile.winrate || ''}
@@ -474,14 +478,24 @@ export default function ValorantAdmin() {
             placeholder="VD: 58.4%"
           />
         </div>
-        <div className="flex flex-col gap-2 sm:col-span-2">
-          <label className="text-[9px] font-mono tracking-widest text-gray-400 uppercase">Tỷ lệ Headshot (Headshot %)</label>
+        <div className="flex flex-col gap-2">
+          <label className="text-[9px] font-mono tracking-widest text-gray-400 uppercase">{t('val_headshot')}</label>
           <input
             type="text"
             value={valProfile.headshot || ''}
             onChange={(e) => setValProfile({ ...valProfile, headshot: e.target.value })}
             className="bg-black/50 border border-white/10 p-2.5 text-xs focus:border-amber-500 focus:bg-amber-500/5 focus:outline-none text-white"
             placeholder="VD: 24.8%"
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <label className="text-[9px] font-mono tracking-widest text-gray-400 uppercase">{t('val_matches')}</label>
+          <input
+            type="text"
+            value={valProfile.matchesPlayed || ''}
+            onChange={(e) => setValProfile({ ...valProfile, matchesPlayed: e.target.value })}
+            className="bg-black/50 border border-white/10 p-2.5 text-xs focus:border-amber-500 focus:bg-amber-500/5 focus:outline-none text-white"
+            placeholder="VD: 5"
           />
         </div>
       </div>

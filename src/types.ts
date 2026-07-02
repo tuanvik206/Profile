@@ -30,6 +30,7 @@ export interface ValorantProfile {
   kd?: string;
   winrate?: string;
   headshot?: string;
+  matchesPlayed?: string;
 }
 
 export interface SiteInfo {

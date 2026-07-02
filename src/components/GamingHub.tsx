@@ -516,21 +516,25 @@ export default function GamingHub({ isOpen, onClose }: GamingHubProps) {
                       </div>
                     </div>
 
-                    {/* Stats Block (Tỷ lệ K/D, Thắng, Headshot) */}
+                    {/* Stats Block (Tỷ lệ K/D, Thắng, Headshot, Số trận) */}
                     <div className="pt-4 border-t border-white/5 space-y-2">
-                      <span className="text-[8px] font-mono tracking-widest text-gray-500 uppercase">Chỉ số thi đấu (Stats)</span>
-                      <div className="grid grid-cols-3 gap-2">
+                      <span className="text-[8px] font-mono tracking-widest text-gray-500 uppercase">{t('val_stats_header')}</span>
+                      <div className="grid grid-cols-2 gap-2">
                         <div className="bg-white/[0.02] border border-white/5 p-2 rounded-sm text-center hover:border-amber-500/20 transition-colors">
-                          <span className="text-[7px] font-mono text-gray-500 uppercase block">K/D Ratio</span>
+                          <span className="text-[7px] font-mono text-gray-500 uppercase block">{t('val_kd_ratio')}</span>
                           <span className="text-xs font-mono text-white font-bold block mt-0.5">{valProfile.kd || "1.15"}</span>
                         </div>
                         <div className="bg-white/[0.02] border border-white/5 p-2 rounded-sm text-center hover:border-amber-500/20 transition-colors">
-                          <span className="text-[7px] font-mono text-gray-500 uppercase block">Win Rate</span>
+                          <span className="text-[7px] font-mono text-gray-500 uppercase block">{t('val_win_rate')}</span>
                           <span className="text-xs font-mono text-white font-bold block mt-0.5">{valProfile.winrate || "53.2%"}</span>
                         </div>
                         <div className="bg-white/[0.02] border border-white/5 p-2 rounded-sm text-center hover:border-amber-500/20 transition-colors">
-                          <span className="text-[7px] font-mono text-gray-500 uppercase block">Headshot %</span>
+                          <span className="text-[7px] font-mono text-gray-500 uppercase block">{t('val_headshot')}</span>
                           <span className="text-xs font-mono text-white font-bold block mt-0.5">{valProfile.headshot || "22.5%"}</span>
+                        </div>
+                        <div className="bg-white/[0.02] border border-white/5 p-2 rounded-sm text-center hover:border-amber-500/20 transition-colors">
+                          <span className="text-[7px] font-mono text-gray-500 uppercase block">{t('val_matches')}</span>
+                          <span className="text-xs font-mono text-white font-bold block mt-0.5">{valProfile.matchesPlayed || "5"}</span>
                         </div>
                       </div>
                     </div>

@@ -79,7 +79,12 @@ const translations = {
     'education_major_default': 'CÔNG NGHỆ THÔNG TIN',
     'education_years_default': '2024 - 2028',
     'education_desc_default': 'Một chút giới thiệu về hành trình học tập của tôi.',
-    'loading': 'Đang tải...'
+    'loading': 'Đang tải...',
+    'val_stats_header': 'Chỉ số thi đấu (Stats)',
+    'val_kd_ratio': 'K/D Ratio',
+    'val_win_rate': 'Win Rate',
+    'val_headshot': 'Headshot %',
+    'val_matches': 'Matches (Số trận)'
   },
   en: {
     // Portfolio
@@ -151,7 +156,12 @@ const translations = {
     'education_major_default': 'Information Technology',
     'education_years_default': '2024 - 2028',
     'education_desc_default': '',
-    'loading': 'Loading...'
+    'loading': 'Loading...',
+    'val_stats_header': 'Competitive Statistics',
+    'val_kd_ratio': 'K/D Ratio',
+    'val_win_rate': 'Win Rate',
+    'val_headshot': 'Headshot %',
+    'val_matches': 'Matches Played'
   }
 };
 
