@@ -34,8 +34,19 @@ body {
   background: rgba(245, 158, 11, 0.5);
 }
 
+.custom-scrollbar {
+  scrollbar-width: none; /* Firefox - Ẩn mặc định */
+  -ms-overflow-style: none; /* IE/Edge - Ẩn mặc định */
+}
+
+.custom-scrollbar:hover {
+  scrollbar-width: thin; /* Firefox - Hiện khi hover */
+  scrollbar-color: rgba(245, 158, 11, 0.25) transparent;
+}
+
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
+  height: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -43,12 +54,16 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(245, 158, 11, 0.3);
-  border-radius: 4px;
+  background: transparent; /* Webkit - Ẩn mặc định */
+  border-radius: 9999px;
+}
+
+.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+  background: rgba(245, 158, 11, 0.25); /* Webkit - Hiện khi hover */
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(245, 158, 11, 0.6);
+  background: rgba(245, 158, 11, 0.6) !important;
 }
 
 .no-scrollbar::-webkit-scrollbar {
