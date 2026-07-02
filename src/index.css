@@ -12,6 +12,7 @@ body {
   color: #ffffff;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-y: scroll;
 }
 
 /* Custom Scrollbar matching Amber theme */
@@ -48,4 +49,12 @@ body {
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(245, 158, 11, 0.6);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

@@ -1,21 +1,44 @@
-import { Github, Facebook, Mail, Instagram, Loader2, Linkedin, Twitter, Youtube, Dribbble, Twitch } from "lucide-react";
+import { Github, Facebook, Mail, Instagram, Loader2, Linkedin, Twitter, Youtube, Dribbble, Twitch, X } from "lucide-react";
 import { motion, AnimatePresence, Variants, useMotionValue, useSpring, useTransform } from "motion/react";
 import { useEffect, useState } from "react";
 import Background from "./Background";
 import { supabase } from "../lib/supabase";
-import { normalizeSiteInfo, SITE_INFO_SELECT_FIELDS } from "../lib/security";
 import { SiteInfo } from "../types";
+import GamingHub from "./GamingHub";
+import { useLanguage } from "../contexts/LanguageContext";
 
-// Fallback icon for TikTok/Discord or anything missing
-const CustomIcon = ({ name, size = 16 }: { name: string, size?: number }) => (
-  <div style={{ width: size, height: size }} className="flex items-center justify-center font-bold text-[10px]">
-    {name.charAt(0)}
-  </div>
+const Tiktok = ({ size = 16 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+  </svg>
+);
+
+const Behance = ({ size = 16 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 13H15" />
+    <path d="M18 9.5a2.5 2.5 0 0 0-2.5 2.5v1.5a2.5 2.5 0 0 0 5 0v-1.5a2.5 2.5 0 0 0-2.5-2.5Z" />
+    <path d="M8 12h3" />
+    <path d="M11 9H4v10h7a3 3 0 0 0 0-6 3 3 0 0 0 0-4Z" />
+  </svg>
+);
+
+const Discord = ({ size = 16 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18.17 6c-1.39-1-2.9-1.63-4.49-1.85a.07.07 0 0 0-.07.03 9.54 9.54 0 0 0-.42.86 8.79 8.79 0 0 0-2.38 0 .07.07 0 0 0-.07-.03c-1.58.22-3.1.85-4.49 1.85a.07.07 0 0 0-.03.03C3.39 10.46 2.3 14.77 2.76 19a.07.07 0 0 0 .03.05c1.9 1.4 3.73 2.26 5.53 2.82a.08.08 0 0 0 .08-.03c.42-.58.8-1.2 1.14-1.85a.07.07 0 0 0-.04-.1 6.14 6.14 0 0 1-.88-.42.07.07 0 0 1-.01-.11c.07-.05.15-.11.22-.17a.07.07 0 0 1 .07-.01c3.62 1.66 7.55 1.66 11.13 0a.07.07 0 0 1 .07.01c.07.06.15.12.22.17a.07.07 0 0 1-.01.11 6.13 6.13 0 0 1-.88.42.07.07 0 0 0-.04.1c.34.65.72 1.27 1.14 1.85a.08.08 0 0 0 .08.03c1.8-.56 3.63-1.42 5.53-2.82a.07.07 0 0 0 .03-.05c.53-4.93-.86-9.17-3.04-13a.07.07 0 0 0-.03-.03z" />
+    <circle cx="8.5" cy="12.5" r="1.5" fill="currentColor" />
+    <circle cx="15.5" cy="12.5" r="1.5" fill="currentColor" />
+  </svg>
 );
 
 export default function Portfolio() {
+  const { t, language, setLanguage } = useLanguage();
   const [siteInfo, setSiteInfo] = useState<SiteInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showGaming, setShowGaming] = useState(false);
+  const [showIntroPopup, setShowIntroPopup] = useState(false);
+  const [showEducationPopup, setShowEducationPopup] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [targetUrl, setTargetUrl] = useState<string | null>(null);
 
   // 3D Tilt Effect
   const mouseX = useMotionValue(0);
@@ -45,23 +68,106 @@ export default function Portfolio() {
     // Add artificial delay for smoother loading experience
     const minLoadTime = new Promise(resolve => setTimeout(resolve, 1500));
     Promise.all([fetchSiteInfo(), minLoadTime]).then(() => setLoading(false));
+
+    // Đăng ký Supabase Realtime để đồng bộ tức thời khi Admin thay đổi dữ liệu
+    let channel: any;
+    if (supabase) {
+      channel = supabase
+        .channel('site_info_changes')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'site_info' },
+          (payload) => {
+            if (payload.new) {
+              const newData = { ...payload.new };
+              // Fallback for fields that might not exist in Supabase yet
+              if (!newData.education_logo && localStorage.getItem('education_logo')) {
+                newData.education_logo = localStorage.getItem('education_logo');
+              }
+              if (!newData.education_desc && localStorage.getItem('education_desc')) {
+                newData.education_desc = localStorage.getItem('education_desc');
+              }
+              if (!newData.education_school_en && localStorage.getItem('education_school_en')) {
+                newData.education_school_en = localStorage.getItem('education_school_en');
+              }
+              if (!newData.education_major_en && localStorage.getItem('education_major_en')) {
+                newData.education_major_en = localStorage.getItem('education_major_en');
+              }
+              if (!newData.education_years_en && localStorage.getItem('education_years_en')) {
+                newData.education_years_en = localStorage.getItem('education_years_en');
+              }
+              if (!newData.education_desc_en && localStorage.getItem('education_desc_en')) {
+                newData.education_desc_en = localStorage.getItem('education_desc_en');
+              }
+              setSiteInfo(newData as SiteInfo);
+            }
+          }
+        )
+        .subscribe();
+    }
+
+    return () => {
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
   }, []);
+
+  // Cập nhật favicon + SEO meta tags theo siteInfo
+  useEffect(() => {
+    if (!siteInfo) return;
+
+    const setMeta = (selector: string, attr: string, value: string) => {
+      const el = document.querySelector(selector);
+      if (el) el.setAttribute(attr, value);
+    };
+
+    // Title
+    if (siteInfo.name) {
+      document.title = siteInfo.name;
+      setMeta('meta[property="og:title"]',   'content', `${siteInfo.name} — Portfolio`);
+      setMeta('meta[name="twitter:title"]',  'content', `${siteInfo.name} — Portfolio`);
+    }
+
+    // Favicon + og:image
+    if (siteInfo.avatar_url) {
+      const favicon = document.getElementById('dynamic-favicon') as HTMLLinkElement | null;
+      if (favicon) favicon.href = siteInfo.avatar_url;
+      setMeta('#og-image',                   'content', siteInfo.avatar_url);
+      setMeta('#twitter-image',              'content', siteInfo.avatar_url);
+    }
+
+    // og:url
+    setMeta('meta[property="og:url"]', 'content', window.location.origin);
+  }, [siteInfo]);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (countdown !== null && countdown > 0) {
+      timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+    } else if (countdown === 0 && targetUrl) {
+      window.open(targetUrl, '_blank');
+      setCountdown(null);
+      setTargetUrl(null);
+    }
+    return () => clearTimeout(timer);
+  }, [countdown, targetUrl]);
 
   const fetchSiteInfo = async () => {
     try {
       if (!supabase) {
         // Fallback data if Supabase is not configured
         setSiteInfo({
-          name: "",
-          avatar_url: "",
-          project_link: "",
-          education_school: "",
-          education_major: "",
-          education_years: "",
-          facebook_url: "",
-          instagram_url: "",
-          github_url: "",
-          email: ""
+          name: "ANH TUẤN",
+          avatar_url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop",
+          project_link: "https://tradiemlms.click/",
+          education_school: "TRƯỜNG ĐẠI HỌC CÔNG NGHỆ THÔNG TIN VÀ TRUYỀN THÔNG",
+          education_major: "CÔNG NGHỆ THÔNG TIN",
+          education_years: "2024 - 2028",
+          facebook_url: "#",
+          instagram_url: "#",
+          github_url: "#",
+          email: "mailto:tuanaraoo@gmail.com"
         });
         setLoading(false);
         return;
@@ -69,32 +175,70 @@ export default function Portfolio() {
 
       const { data, error } = await supabase
         .from('site_info')
-        .select(SITE_INFO_SELECT_FIELDS)
+        .select('*')
         .single();
 
       if (error && error.code !== 'PGRST116') {
         console.error("Error fetching site info:", error.message || error);
       } else if (data) {
-        const normalized = normalizeSiteInfo((data as Partial<SiteInfo> | null) ?? null);
-        setSiteInfo(normalized as SiteInfo);
+        // Fallback for fields that might not exist in Supabase yet
+        if (!data.education_logo && localStorage.getItem('education_logo')) {
+          data.education_logo = localStorage.getItem('education_logo');
+        }
+        if (!data.education_desc && localStorage.getItem('education_desc')) {
+          data.education_desc = localStorage.getItem('education_desc');
+        }
+        if (!data.education_school_en && localStorage.getItem('education_school_en')) {
+          data.education_school_en = localStorage.getItem('education_school_en');
+        }
+        if (!data.education_major_en && localStorage.getItem('education_major_en')) {
+          data.education_major_en = localStorage.getItem('education_major_en');
+        }
+        if (!data.education_years_en && localStorage.getItem('education_years_en')) {
+          data.education_years_en = localStorage.getItem('education_years_en');
+        }
+        if (!data.education_desc_en && localStorage.getItem('education_desc_en')) {
+          data.education_desc_en = localStorage.getItem('education_desc_en');
+        }
+        setSiteInfo(data);
       }
     } catch (err) {
       console.error(err);
     }
   };
 
-  const info = normalizeSiteInfo(siteInfo || {
-    name: "",
-    avatar_url: "",
-    project_link: "",
-    education_school: "",
-    education_major: "",
-    education_years: "",
-    facebook_url: "",
-    instagram_url: "",
-    github_url: "",
-    email: ""
-  }) as SiteInfo;
+  const info = siteInfo || {
+    name: "ANH TUẤN",
+    avatar_url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop",
+    project_link: "https://tradiemlms.click/",
+    education_school: "TRƯỜNG ĐẠI HỌC CÔNG NGHỆ THÔNG TIN VÀ TRUYỀN THÔNG",
+    education_major: "CÔNG NGHỆ THÔNG TIN",
+    education_years: "2024 - 2028",
+    education_school_en: "University of Information Technology and Communication",
+    education_major_en: "Information Technology",
+    education_years_en: "2024 - 2028",
+    education_desc_en: "",
+    facebook_url: "#",
+    instagram_url: "#",
+    github_url: "#",
+    email: "mailto:tuanaraoo@gmail.com"
+  };
+
+  const educationSchool = language === 'en'
+    ? (info.education_school_en || t('education_school_default'))
+    : (info.education_school || t('education_school_default'));
+
+  const educationMajor = language === 'en'
+    ? (info.education_major_en || t('education_major_default'))
+    : (info.education_major || t('education_major_default'));
+
+  const educationYears = language === 'en'
+    ? (info.education_years_en || t('education_years_default'))
+    : (info.education_years || t('education_years_default'));
+
+  const educationDesc = language === 'en'
+    ? (info.education_desc_en || t('education_desc_default'))
+    : (info.education_desc || t('education_desc_default'));
 
   const socialLinks = [
     { icon: <Facebook size={16} />, href: info.facebook_url, label: "Facebook" },
@@ -103,11 +247,11 @@ export default function Portfolio() {
     { icon: <Linkedin size={16} />, href: info.linkedin_url, label: "LinkedIn" },
     { icon: <Twitter size={16} />, href: info.twitter_url, label: "Twitter" },
     { icon: <Youtube size={16} />, href: info.youtube_url, label: "YouTube" },
-    { icon: <CustomIcon name="TikTok" size={16} />, href: info.tiktok_url, label: "TikTok" },
+    { icon: <Tiktok size={16} />, href: info.tiktok_url, label: "TikTok" },
     { icon: <Dribbble size={16} />, href: info.dribbble_url, label: "Dribbble" },
-    { icon: <CustomIcon name="Behance" size={16} />, href: info.behance_url, label: "Behance" },
+    { icon: <Behance size={16} />, href: info.behance_url, label: "Behance" },
     { icon: <Twitch size={16} />, href: info.twitch_url, label: "Twitch" },
-    { icon: <CustomIcon name="Discord" size={16} />, href: info.discord_url, label: "Discord" },
+    { icon: <Discord size={16} />, href: info.discord_url, label: "Discord" },
     { icon: <Mail size={16} />, href: info.email?.startsWith('mailto:') ? info.email : `mailto:${info.email}`, label: "Email" },
   ].filter(link => link.href && link.href !== "#" && link.href !== "mailto:" && link.href !== "mailto:undefined");
 
@@ -132,24 +276,8 @@ export default function Portfolio() {
     }
   };
 
-  const [firstName, ...lastNameParts] = (info.name || '').split(' ');
+  const [firstName, ...lastNameParts] = info.name.split(' ');
   const lastName = lastNameParts.join(' ');
-
-  useEffect(() => {
-    const avatarUrl = info.avatar_url || '';
-
-    document.title = info.name || 'Portfolio';
-
-    let favicon = document.querySelector("link[rel='icon']") as HTMLLinkElement | null;
-    if (!favicon) {
-      favicon = document.createElement('link');
-      favicon.rel = 'icon';
-      document.head.appendChild(favicon);
-    }
-
-    favicon.href = avatarUrl || '/favicon.svg';
-    favicon.type = avatarUrl ? 'image/jpeg' : 'image/svg+xml';
-  }, [info.avatar_url, info.name]);
 
   return (
     <>
@@ -184,7 +312,7 @@ export default function Portfolio() {
                 className="flex items-center gap-3"
               >
                 <div className="w-6 h-[1px] bg-gradient-to-r from-transparent to-amber-500/50" />
-                <p className="text-amber-500 text-[10px] tracking-[0.3em] font-mono uppercase">Khởi tạo</p>
+                <p className="text-amber-500 text-[10px] tracking-[0.3em] font-mono uppercase">{t('init')}</p>
                 <div className="w-6 h-[1px] bg-gradient-to-l from-transparent to-amber-500/50" />
               </motion.div>
             </div>
@@ -208,17 +336,30 @@ export default function Portfolio() {
               className="absolute inset-0 pointer-events-none"
             >
               {/* Peripheral HUD Elements */}
-              <div className="flex absolute top-4 left-4 sm:top-12 sm:left-12 flex-col gap-2 -z-10">
+              <div className="flex absolute top-4 left-4 sm:top-12 sm:left-12 flex-col gap-2 z-50 pointer-events-auto">
                 <div className="w-4 h-4 border border-white/20"></div>
-                <div className="text-[10px] tracking-widest text-gray-500">{info.est_label || 'EST. 2026'}</div>
+                <div className="text-[10px] tracking-widest text-gray-500">EST. {info.est_year || '2026'}</div>
+                <div className="flex items-center gap-2 mt-4 text-[10px] tracking-widest font-mono">
+                  <button
+                    onClick={() => setLanguage('vi')}
+                    className={`transition-colors uppercase ${language === 'vi' ? 'text-amber-500' : 'text-gray-500 hover:text-white'}`}
+                  >
+                    VI
+                  </button>
+                  <span className="text-gray-700">|</span>
+                  <button
+                    onClick={() => setLanguage('en')}
+                    className={`transition-colors uppercase ${language === 'en' ? 'text-amber-500' : 'text-gray-500 hover:text-white'}`}
+                  >
+                    EN
+                  </button>
+                </div>
               </div>
 
-              <div className="absolute top-6 right-6 sm:top-12 sm:right-12 flex flex-col items-end gap-2 -z-10">
-                <div className="text-right max-w-[140px] sm:max-w-none">
-                  <p className="text-[10px] tracking-widest text-gray-500 uppercase leading-tight">{info.location_name || ''}</p>
-                  <p className="mt-1 text-[9px] sm:text-[10px] tracking-widest text-gray-700 uppercase leading-tight">
-                    {info.location_coordinates || ''}
-                  </p>
+              <div className="absolute top-6 right-6 sm:top-12 sm:right-12 flex flex-col items-end gap-4 -z-10">
+                <div className="text-right">
+                  <p className="text-[10px] tracking-widest text-gray-500 uppercase">{info.location_text || t('location')}</p>
+                  <p className="hidden sm:block text-[10px] tracking-widest text-gray-700 uppercase">{info.coordinates || '14.0583° N, 108.2772° E'}</p>
                 </div>
               </div>
             </motion.div>
@@ -257,11 +398,20 @@ export default function Portfolio() {
                 <div className="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-amber-500"></div>
 
                 <div className="flex flex-col">
-                  <p className="text-amber-500 text-[10px] sm:text-xs font-mono tracking-widest mb-6 uppercase text-center sm:text-left">— GIỚI THIỆU</p>
+                  <button
+                    onClick={() => setShowIntroPopup(true)}
+                    className="text-amber-500 text-[10px] sm:text-xs font-mono tracking-widest mb-6 uppercase text-center sm:text-left hover:text-white transition-colors flex items-center justify-center sm:justify-start gap-2 group cursor-pointer bg-transparent border-none outline-none focus:outline-none"
+                  >
+                    <span>{t('menu_intro')}</span>
+                    <span className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
+                    </span>
+                  </button>
 
                   <div className="flex flex-col sm:flex-row gap-6 sm:gap-10 items-center sm:items-start mb-10 text-center sm:text-left">
                     {/* Profile Avatar */}
                     <motion.div
+                      onClick={() => setShowIntroPopup(true)}
                       initial={{ scale: 0.8, opacity: 0 }}
                       animate={{
                         scale: 1,
@@ -273,75 +423,131 @@ export default function Portfolio() {
                         opacity: { delay: 0.2, duration: 0.8, ease: "easeOut" },
                         y: { duration: 6, repeat: Infinity, ease: "easeInOut" }
                       }}
-                      className="relative w-32 h-32 sm:w-36 sm:h-36 shrink-0 transition-all duration-700 ease-out mx-auto sm:mx-0 group cursor-pointer"
+                      className="relative w-36 h-36 sm:w-44 sm:h-44 shrink-0 transition-all duration-700 ease-out mx-auto sm:mx-0 sm:mt-2 group cursor-pointer rounded-full overflow-hidden"
                     >
-                      <div className="w-full h-full p-1 border-2 border-amber-500/50 group-hover:border-amber-500 transition-colors duration-700 ease-out shadow-[0_0_15px_rgba(245,158,11,0.2)] group-hover:shadow-[0_0_30px_rgba(245,158,11,0.4)]">
+                      <div className="w-full h-full p-1 border-2 border-amber-500/50 group-hover:border-amber-500 transition-colors duration-700 ease-out shadow-[0_0_15px_rgba(245,158,11,0.2)] group-hover:shadow-[0_0_30px_rgba(245,158,11,0.4)] rounded-full overflow-hidden">
                         <img
-                          src={info.avatar_url || ""}
+                          src={info.avatar_url || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop"}
                           alt="Avatar"
-                          className="w-full h-full object-cover contrast-110 saturate-110 transition-transform duration-700 ease-out"
+                          className="w-full h-full object-cover contrast-110 saturate-110 transition-transform duration-700 ease-out rounded-full"
                         />
                       </div>
                     </motion.div>
 
-                    <div className="flex-1 flex flex-col sm:flex-row justify-between items-center sm:items-start w-full">
+                    <div className="flex-1 flex flex-col sm:flex-row justify-between items-center sm:items-start w-full gap-4">
                       <div className="flex flex-col items-center sm:items-start">
                         {/* Name */}
-                        <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-display font-black tracking-widest leading-[1] mb-4">
-                          {firstName}<br />
+                        <h1 className="text-3xl xs:text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-display font-black tracking-widest leading-[1] mb-4">
+                          {firstName}<br className="hidden sm:block" />
                           {lastName && (
                             <span className="text-transparent" style={{ WebkitTextStroke: "1px rgba(255,255,255,0.4)" }}>
-                              {lastName}
+                              {' '}{lastName}
                             </span>
                           )}
                         </h1>
                       </div>
 
-                      {/* Right Side Geometric Accent (Project Link) */}
-                      {info.project_link && (
-                        <motion.a
-                          href={info.project_link}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                      {/* Actions Group (Projects + Gaming Center) */}
+                      <div className="flex flex-row sm:flex-col items-center sm:items-end gap-4 sm:gap-6 mt-4 sm:mt-0">
+                        {/* Project Link */}
+                        {info.project_link && (
+                          <motion.button
+                            onClick={() => {
+                              setTargetUrl(info.project_link as string);
+                              setCountdown(3);
+                            }}
+                            initial={{ opacity: 0, filter: "blur(4px)" }}
+                            animate={{ opacity: 1, filter: "blur(0px)" }}
+                            transition={{ delay: 0.5, duration: 0.8 }}
+                            className="flex flex-col items-center sm:items-end opacity-60 hover:opacity-100 transition-all cursor-pointer group bg-transparent border-none outline-none focus:outline-none"
+                          >
+                            <div className="relative w-9 h-9 sm:w-16 sm:h-16 mb-1 sm:mb-2">
+                              {/* Outer dashed ring */}
+                              <motion.svg
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+                                viewBox="0 0 100 100"
+                                className="absolute inset-0 w-full h-full text-white/20 group-hover:text-amber-500/50 transition-colors duration-500"
+                              >
+                                <circle cx="50" cy="50" r="48" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="4 8" />
+                              </motion.svg>
+                              {/* Inner solid ring */}
+                              <motion.svg
+                                animate={{ rotate: -360 }}
+                                transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+                                viewBox="0 0 100 100"
+                                className="absolute inset-0 w-full h-full text-amber-500/30 group-hover:text-amber-400 transition-colors duration-500"
+                              >
+                                <circle cx="50" cy="50" r="32" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="20 10" />
+                              </motion.svg>
+                              {/* Center dot */}
+                              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1 sm:w-1.5 h-1 sm:h-1.5 bg-amber-500 rounded-full shadow-[0_0_8px_rgba(245,158,11,0.8)] group-hover:scale-150 group-hover:shadow-[0_0_15px_rgba(245,158,11,1)] transition-all duration-300"></div>
+                            </div>
+
+                            {/* Decorative lines/text */}
+                            <div className="hidden sm:flex items-center gap-1.5 mb-0.5">
+                              <div className="w-6 h-[1px] bg-amber-500/50 group-hover:bg-amber-500/80 transition-colors duration-500"></div>
+                              <p className="text-[7px] font-mono tracking-[0.2em] text-amber-500 group-hover:text-amber-400 transition-colors duration-500 uppercase">{t('menu_project')}</p>
+                            </div>
+                            <div className="hidden sm:flex items-center gap-1.5">
+                              <div className="w-3 h-[1px] bg-amber-500/40 group-hover:bg-amber-500/80 transition-colors duration-500"></div>
+                              <p className="text-[7px] font-mono tracking-[0.2em] text-gray-500 group-hover:text-amber-400 transition-colors duration-500 uppercase">
+                                {info.project_name || "LINK"}
+                              </p>
+                            </div>
+                          </motion.button>
+                        )}
+
+                        {/* Gaming Center Toggle */}
+                        <motion.button
+                          onClick={() => setShowGaming(true)}
                           initial={{ opacity: 0, filter: "blur(4px)" }}
                           animate={{ opacity: 1, filter: "blur(0px)" }}
-                          transition={{ delay: 0.5, duration: 0.8 }}
-                          className="absolute top-6 right-6 sm:relative sm:top-auto sm:right-auto flex flex-col items-end opacity-60 hover:opacity-100 transition-all cursor-pointer group mt-6 sm:mt-0"
+                          transition={{ delay: 0.6, duration: 0.8 }}
+                          className="flex flex-col items-center sm:items-end opacity-60 hover:opacity-100 transition-all cursor-pointer group bg-transparent border-none outline-none focus:outline-none"
                         >
-                          <div className="relative w-10 h-10 sm:w-16 sm:h-16 mb-2 sm:mb-4">
+                          <div className="relative w-9 h-9 sm:w-16 sm:h-16 mb-1 sm:mb-2">
                             {/* Outer dashed ring */}
                             <motion.svg
-                              animate={{ rotate: 360 }}
-                              transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+                              animate={{ rotate: -360 }}
+                              transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
                               viewBox="0 0 100 100"
-                              className="absolute inset-0 w-full h-full text-white/20 group-hover:text-amber-500/50 transition-colors duration-500"
+                              className="absolute inset-0 w-full h-full text-white/20 group-hover:text-amber-400/50 transition-colors duration-500"
                             >
-                              <circle cx="50" cy="50" r="48" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="4 8" />
+                              <circle cx="50" cy="50" r="48" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="6 6" />
                             </motion.svg>
                             {/* Inner solid ring */}
                             <motion.svg
-                              animate={{ rotate: -360 }}
-                              transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
                               viewBox="0 0 100 100"
-                              className="absolute inset-0 w-full h-full text-amber-500/30 group-hover:text-amber-400 transition-colors duration-500"
+                              className="absolute inset-0 w-full h-full text-amber-500/30 group-hover:text-amber-300 transition-colors duration-500"
                             >
-                              <circle cx="50" cy="50" r="32" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="20 10" />
+                              <circle cx="50" cy="50" r="32" stroke="currentColor" strokeWidth="1.5" fill="none" strokeDasharray="15 15" />
                             </motion.svg>
-                            {/* Center dot */}
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1 sm:w-1.5 h-1 sm:h-1.5 bg-amber-500 rounded-full shadow-[0_0_8px_rgba(245,158,11,0.8)] group-hover:scale-150 group-hover:shadow-[0_0_15px_rgba(245,158,11,1)] transition-all duration-300"></div>
+                            {/* Game icon in the center */}
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-amber-500 group-hover:text-amber-400 transition-colors">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 sm:w-5 sm:h-5">
+                                <line x1="6" y1="12" x2="10" y2="12" />
+                                <line x1="8" y1="10" x2="8" y2="14" />
+                                <line x1="15" y1="13" x2="15.01" y2="13" />
+                                <line x1="18" y1="11" x2="18.01" y2="11" />
+                                <rect x="2" y="6" width="20" height="12" rx="3" />
+                              </svg>
+                            </div>
                           </div>
 
                           {/* Decorative lines/text */}
-                          <div className="flex items-center gap-1 sm:gap-2 mb-1">
-                            <div className="w-4 sm:w-8 h-[1px] bg-white/20 group-hover:bg-amber-500/50 transition-colors duration-500"></div>
-                            <p className="text-[6px] sm:text-[8px] font-mono tracking-[0.2em] sm:tracking-[0.3em] text-gray-400 group-hover:text-amber-500 transition-colors duration-500">DỰ ÁN</p>
+                          <div className="hidden sm:flex items-center gap-1.5 mb-0.5">
+                            <div className="w-6 h-[1px] bg-amber-500/50 group-hover:bg-amber-500/80 transition-colors duration-500"></div>
+                            <p className="text-[7px] font-mono tracking-[0.2em] text-amber-500 group-hover:text-amber-400 transition-colors duration-500 uppercase">{t('menu_gaming')}</p>
                           </div>
-                          <div className="flex items-center gap-1 sm:gap-2">
-                            <div className="w-2 sm:w-4 h-[1px] bg-amber-500/40 group-hover:bg-amber-500/80 transition-colors duration-500"></div>
-                            <p className="text-[6px] sm:text-[8px] font-mono tracking-[0.2em] sm:tracking-[0.3em] text-gray-500 group-hover:text-amber-400 transition-colors duration-500">LINK</p>
+                          <div className="hidden sm:flex items-center gap-1.5">
+                            <div className="w-3 h-[1px] bg-amber-500/40 group-hover:bg-amber-500/80 transition-colors duration-500"></div>
+                            <p className="text-[7px] font-mono tracking-[0.2em] text-gray-500 group-hover:text-amber-400 transition-colors duration-500">CENTER</p>
                           </div>
-                        </motion.a>
-                      )}
+                        </motion.button>
+                      </div>
                     </div>
                   </div>
 
@@ -352,33 +558,42 @@ export default function Portfolio() {
                     variants={containerVariants}
                     className="mb-10 w-full text-center sm:text-left"
                   >
-                    <motion.p variants={itemVariants} className="text-[9px] text-gray-600 tracking-widest uppercase mb-4">Học vấn</motion.p>
+                    <motion.button
+                      variants={itemVariants}
+                      onClick={() => setShowEducationPopup(true)}
+                      className="text-amber-500 hover:text-white text-[10px] sm:text-xs font-mono tracking-widest mb-6 uppercase text-center sm:text-left transition-colors flex items-center justify-center sm:justify-start gap-2 group cursor-pointer bg-transparent border-none outline-none focus:outline-none w-full sm:w-auto"
+                    >
+                      <span>{t('menu_education')}</span>
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
+                      </span>
+                    </motion.button>
                     <div className="flex flex-col gap-3 w-full items-center sm:items-start">
                       <motion.div
                         variants={itemVariants}
-                        whileHover={{ scale: 1.02, x: 5, backgroundColor: "rgba(255,255,255,0.05)" }}
+                        whileHover={{ scale: 1.02, x: 5, backgroundColor: "rgba(156,163,175,0.05)" }}
                         transition={{ duration: 0.3, ease: "easeOut" }}
-                        className="px-3 sm:px-4 py-2.5 sm:py-3 text-[9px] sm:text-[10px] md:text-xs font-tech uppercase tracking-widest text-white border border-white/10 bg-white/[0.02] hover:border-white/30 transition-colors cursor-default w-full sm:w-auto text-center sm:text-left"
+                        className="px-3 sm:px-4 py-2.5 sm:py-3 text-[9px] sm:text-[10px] md:text-xs font-tech uppercase tracking-widest text-white border border-white/10 bg-white/[0.02] hover:border-white/20 transition-colors cursor-default w-full sm:w-auto text-center sm:text-left"
                       >
-                        {info.education_school}
+                        {educationSchool}
                       </motion.div>
 
                       <div className="flex flex-row flex-wrap justify-center sm:justify-start gap-3 w-full sm:w-auto">
                         <motion.div
                           variants={itemVariants}
-                          whileHover={{ scale: 1.05, backgroundColor: "rgba(245,158,11,0.1)" }}
+                          whileHover={{ scale: 1.05, backgroundColor: "rgba(156,163,175,0.05)" }}
                           transition={{ duration: 0.3, ease: "easeOut" }}
-                          className="px-3 sm:px-4 py-2.5 sm:py-3 text-[9px] sm:text-[10px] md:text-xs uppercase font-tech tracking-widest text-amber-500 border border-amber-500/20 bg-amber-500/[0.02] cursor-default text-center sm:text-left transition-colors"
+                          className="px-3 sm:px-4 py-2.5 sm:py-3 text-[9px] sm:text-[10px] md:text-xs uppercase font-tech tracking-widest text-amber-500 border border-white/10 bg-white/[0.02] cursor-default text-center sm:text-left transition-colors"
                         >
-                          {info.education_major}
+                          {educationMajor}
                         </motion.div>
                         <motion.div
                           variants={itemVariants}
-                          whileHover={{ scale: 1.05, color: "#fff", backgroundColor: "rgba(255,255,255,0.05)" }}
+                          whileHover={{ scale: 1.05, color: "#fff", backgroundColor: "rgba(156,163,175,0.05)" }}
                           transition={{ duration: 0.3, ease: "easeOut" }}
-                          className="px-3 sm:px-4 py-2.5 sm:py-3 text-[9px] sm:text-[10px] md:text-xs uppercase tracking-widest text-gray-400 border border-white/5 bg-white/[0.01] cursor-default whitespace-nowrap transition-colors"
+                          className="px-3 sm:px-4 py-2.5 sm:py-3 text-[9px] sm:text-[10px] md:text-xs uppercase tracking-widest text-white border border-white/10 bg-white/[0.02] cursor-default whitespace-nowrap transition-colors"
                         >
-                          {info.education_years}
+                          {educationYears}
                         </motion.div>
                       </div>
                     </div>
@@ -393,21 +608,21 @@ export default function Portfolio() {
                   className="flex flex-col sm:flex-row sm:items-center gap-6 sm:gap-12 border-t border-white/5 pt-6 sm:pt-8 text-center sm:text-left"
                 >
                   <div className="flex flex-col gap-3 sm:gap-1 w-full">
-                    <motion.span variants={itemVariants} className="text-[9px] text-gray-600 tracking-widest uppercase mb-1">
-                      Liên kết qua
+                    <motion.span variants={itemVariants} className="text-[10px] sm:text-xs font-mono text-amber-500 tracking-widest uppercase mb-4 text-center sm:text-left">
+                      {t('menu_social')}
                     </motion.span>
-                    <div className="flex flex-row flex-wrap justify-center sm:justify-start gap-x-6 gap-y-4">
+                    <div className="flex flex-row flex-wrap justify-center sm:justify-start gap-2 sm:gap-x-6 sm:gap-y-4">
                       {socialLinks.length > 0 ? socialLinks.map((link, index) => (
                         <motion.a
                           key={link.label}
                           href={link.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           variants={itemVariants}
                           whileHover={{ scale: 1.05, y: -2, transition: { duration: 0.2, ease: "easeOut" } }}
                           whileTap={{ scale: 0.95 }}
-                          className="flex items-center gap-1.5 text-[10px] sm:text-xs text-gray-400 hover:text-amber-500 transition-colors uppercase tracking-widest pb-1 group"
+                          className="flex items-center justify-center gap-1.5 text-[10px] sm:text-xs text-gray-400 hover:text-amber-500 transition-colors uppercase tracking-widest group p-2.5 sm:p-0 border border-white/5 sm:border-none bg-white/[0.02] sm:bg-transparent rounded-sm sm:rounded-none min-w-[38px] sm:min-w-0 h-[38px] sm:h-auto"
                           aria-label={link.label}
-                          rel="noopener noreferrer"
-                          target={link.href?.startsWith('mailto:') ? undefined : '_blank'}
                         >
                           <motion.div
                             className="group-hover:text-amber-500 transition-colors duration-300"
@@ -438,6 +653,176 @@ export default function Portfolio() {
                   transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
                   className="w-16 h-16 border border-amber-500/30 rotate-45"
                 ></motion.div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <GamingHub isOpen={showGaming} onClose={() => setShowGaming(false)} />
+
+        {/* Countdown Overlay */}
+        <AnimatePresence>
+          {countdown !== null && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm pointer-events-auto"
+              onClick={() => {
+                setCountdown(null);
+                setTargetUrl(null);
+              }}
+            >
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 1.2, opacity: 0 }}
+                className="flex flex-col items-center gap-6 p-8 border border-amber-500/30 bg-black/50 cursor-default"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="text-[12px] font-mono tracking-[0.2em] text-amber-500 uppercase">
+                  {t('redirecting')}
+                </div>
+                {siteInfo?.project_name && (
+                  <div className="text-xl font-bold font-tech text-white mb-2 tracking-widest uppercase text-center">
+                    {siteInfo.project_name}
+                  </div>
+                )}
+                {!siteInfo?.project_name && targetUrl && (
+                  <div className="text-sm font-mono text-gray-400 mb-2 max-w-xs truncate">
+                    {targetUrl}
+                  </div>
+                )}
+                <div className="text-8xl font-display font-bold text-white tabular-nums">
+                  {countdown}
+                </div>
+                <button
+                  onClick={() => {
+                    setCountdown(null);
+                    setTargetUrl(null);
+                  }}
+                  className="mt-4 px-6 py-2 border border-white/20 text-[10px] font-mono tracking-widest text-gray-400 hover:text-white hover:border-white/50 hover:bg-white/5 transition-all uppercase cursor-pointer"
+                >
+                  {t('redirect_cancel')}
+                </button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Intro Overlay Popup */}
+        <AnimatePresence>
+          {showIntroPopup && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 pointer-events-auto"
+              onClick={() => setShowIntroPopup(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-[#050505] border border-white/10 p-8 sm:p-12 max-w-2xl w-full relative overflow-hidden flex flex-col items-center text-center"
+              >
+                {/* Decorative Corners */}
+                <div className="absolute top-0 left-0 w-4 h-4 border-t border-l border-amber-500"></div>
+                <div className="absolute top-0 right-0 w-4 h-4 border-t border-r border-amber-500"></div>
+                <div className="absolute bottom-0 left-0 w-4 h-4 border-b border-l border-amber-500"></div>
+                <div className="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-amber-500"></div>
+
+                <button
+                  onClick={() => setShowIntroPopup(false)}
+                  className="absolute top-4 right-4 text-gray-500 hover:text-amber-500 transition-colors"
+                >
+                  <X size={24} />
+                </button>
+
+                <div className="w-24 h-24 sm:w-32 sm:h-32 mb-6 p-1 border-2 border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.2)] rounded-full overflow-hidden">
+                  <img
+                    src={siteInfo?.avatar_url || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe"}
+                    alt="Avatar"
+                    className="w-full h-full object-cover contrast-110 saturate-110 rounded-full"
+                  />
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-display font-bold text-white mb-2 tracking-widest uppercase">
+                  {siteInfo?.name || "ANH TUẤN"}
+                </h2>
+                <div className="text-amber-500 text-xs font-mono tracking-[0.2em] mb-6 uppercase">
+                  {t('location')}
+                </div>
+                <div className="text-gray-400 text-sm font-sans leading-relaxed max-w-lg mx-auto">
+                  {t('intro_text')}
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Education Overlay Popup */}
+        <AnimatePresence>
+          {showEducationPopup && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 pointer-events-auto"
+              onClick={() => setShowEducationPopup(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-[#050505] border border-white/10 p-8 sm:p-12 max-w-2xl w-full relative overflow-hidden flex flex-col items-center text-center"
+              >
+                {/* Decorative Corners */}
+                <div className="absolute top-0 left-0 w-4 h-4 border-t border-l border-amber-500"></div>
+                <div className="absolute top-0 right-0 w-4 h-4 border-t border-r border-amber-500"></div>
+                <div className="absolute bottom-0 left-0 w-4 h-4 border-b border-l border-amber-500"></div>
+                <div className="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-amber-500"></div>
+
+                <button
+                  onClick={() => setShowEducationPopup(false)}
+                  className="absolute top-4 right-4 text-gray-500 hover:text-amber-500 transition-colors"
+                >
+                  <X size={24} />
+                </button>
+
+                <a
+                  href="https://ictu.edu.vn"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-24 h-24 sm:w-32 sm:h-32 mb-6 p-2 bg-white/5 border border-white/10 rounded-full flex items-center justify-center overflow-hidden shadow-[0_0_15px_rgba(245,158,11,0.12)] transition-transform hover:scale-105"
+                >
+                  {info.education_logo ? (
+                    <img
+                      src={info.education_logo}
+                      alt={info.education_school}
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  ) : (
+                    <div className="w-full h-full rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 font-tech text-4xl">
+                      {info.education_school.charAt(0)}
+                    </div>
+                  )}
+                </a>
+                <h2 className="text-xl sm:text-2xl font-tech font-bold text-white mb-2 tracking-widest uppercase">
+                  {educationSchool}
+                </h2>
+                <div className="text-amber-500 text-xs font-mono tracking-[0.2em] mb-4 uppercase">
+                  {educationMajor}
+                </div>
+                <div className="text-white text-xs font-mono tracking-[0.2em] mb-6 uppercase">
+                  {educationYears}
+                </div>
+                {educationDesc && (
+                  <div className="text-gray-400 text-sm font-sans leading-relaxed max-w-lg mx-auto border-t border-white/10 pt-6">
+                    {educationDesc}
+                  </div>
+                )}
               </motion.div>
             </motion.div>
           )}
