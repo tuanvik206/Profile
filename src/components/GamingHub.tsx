@@ -785,7 +785,7 @@ export default function GamingHub({ isOpen, onClose }: GamingHubProps) {
                           {/* Signature line / stats footer */}
                           <div className="mt-4 pt-3 border-t border-white/5 text-right">
                             <span className="text-[8px] font-mono text-gray-600 tracking-widest uppercase">
-                              VALORANT-API.COM // RIOT GAMES
+                              VALORANT // RIOT GAMES
                             </span>
                           </div>
                         </div>
