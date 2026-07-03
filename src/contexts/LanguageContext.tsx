@@ -84,7 +84,8 @@ const translations = {
     'val_kd_ratio': 'K/D Ratio',
     'val_win_rate': 'Win Rate',
     'val_headshot': 'Headshot %',
-    'val_matches': 'Matches (Số trận)'
+    'val_matches': 'Matches (Số trận)',
+    'no_games_yet': 'Chưa có game nào được thêm'
   },
   en: {
     // Portfolio
@@ -161,7 +162,8 @@ const translations = {
     'val_kd_ratio': 'K/D Ratio',
     'val_win_rate': 'Win Rate',
     'val_headshot': 'Headshot %',
-    'val_matches': 'Matches Played'
+    'val_matches': 'Matches Played',
+    'no_games_yet': 'No games added yet'
   }
 };
 

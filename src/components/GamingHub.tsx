@@ -77,44 +77,7 @@ export const DEFAULT_VAL_PROFILE: ValorantProfile = {
   favoriteSkins: []
 };
 
-export const DEFAULT_GAMES: FavoriteGame[] = [
-  {
-    id: "1",
-    title: "Valorant",
-    category: "FPS / Tactical Shooter",
-    developer: "Riot Games",
-    rank: "Immortal / 1,200 hrs",
-    image_url: "https://cdn1.epicgames.com/offer/cbd5b3d673ad4ad1bd2fe02edf68efec/EGS_VALORANT_RiotGames_S1_2560x1440-27668636fb45811c7ff1a774900a89d1",
-    description: "Tựa game bắn súng chiến thuật 5v5 kịch tính kết hợp giữa kỹ năng đấu súng đỉnh cao và những bộ chiêu thức độc đáo của các Đặc vụ (Agents). Đây là nơi thể hiện tư duy chiến thuật nhạy bén và phản xạ nhanh như chớp."
-  },
-  {
-    id: "2",
-    title: "League of Legends",
-    category: "MOBA / Strategy",
-    developer: "Riot Games",
-    rank: "Master / 2,500 hrs",
-    image_url: "https://cdn1.epicgames.com/offer/24430770b22a4f0493ae99a8043684a0/EGS_LeagueofLegends_RiotGames_S1_2560x1440-a35940424564559b3cb6f08149175440",
-    description: "Đấu trường trực tuyến nhiều người chơi huyền thoại. Nơi đòi hỏi tư duy chiến thuật, khả năng phối hợp đồng đội chuẩn xác từng giây và kỹ năng cá nhân thượng thừa để phá hủy nhà chính đối phương."
-  },
-  {
-    id: "3",
-    title: "Cyberpunk 2077",
-    category: "Action RPG / Open World",
-    developer: "CD Projekt Red",
-    rank: "Completed / 150 hrs",
-    image_url: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=1200&auto=format&fit=crop",
-    description: "Hành trình thám hiểm thành phố tương lai Night City ngập tràn ánh đèn neon, công nghệ cấy ghép sinh học tân tiến và những câu chuyện sinh tử kịch tính của giới lính đánh thuê cyberpunk."
-  },
-  {
-    id: "4",
-    title: "Black Myth: Wukong",
-    category: "Action RPG / Soulslike",
-    developer: "Game Science",
-    rank: "Completed (NG+) / 80 hrs",
-    image_url: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=1200&auto=format&fit=crop",
-    description: "Tuyệt tác nhập vai hành động dựa trên tiểu thuyết kinh điển Tây Du Ký. Hóa thân thành Thiên Mệnh Nhân, người chơi sẽ đối đầu với muôn vàn thử thách, yêu ma quỷ quái để tìm lại lục căn thất lạc."
-  }
-];
+export const DEFAULT_GAMES: FavoriteGame[] = [];
 
 interface GamingHubProps {
   isOpen: boolean;
@@ -124,7 +87,7 @@ interface GamingHubProps {
 export default function GamingHub({ isOpen, onClose }: GamingHubProps) {
   const { language, t } = useLanguage();
   const [activeTab, setActiveTab] = useState<"favorite" | "valProfile" | "valorant">("favorite");
-  const [games, setGames] = useState<FavoriteGame[]>(DEFAULT_GAMES);
+  const [games, setGames] = useState<FavoriteGame[]>([]);
 
   // Valorant Agents State (tab 3)
   const [agents, setAgents] = useState<any[]>([]);
@@ -168,16 +131,16 @@ export default function GamingHub({ isOpen, onClose }: GamingHubProps) {
           }
         }
 
-        // Fallback
+        // Fallback localStorage (không dùng sample data)
         const storedGames = localStorage.getItem("favorite_games");
         if (storedGames) {
           try {
             setGames(JSON.parse(storedGames));
           } catch (e) {
-            setGames(DEFAULT_GAMES);
+            setGames([]);
           }
         } else {
-          setGames(DEFAULT_GAMES);
+          setGames([]);
         }
 
         loadValProfileFallback();
@@ -423,7 +386,7 @@ export default function GamingHub({ isOpen, onClose }: GamingHubProps) {
             {activeTab === "favorite" ? (
               // TAB 1: FAVORITE GAMES (ONLY IMAGE AND NAME)
               <div className="flex-1 overflow-y-auto pr-1 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 content-start gap-4 pb-4 custom-scrollbar">
-                {games.map((game) => (
+              {games.length > 0 ? games.map((game) => (
                   <div
                     key={game.id}
                     className="group border border-white/10 bg-white/[0.01] hover:bg-black/20 hover:border-amber-500/40 transition-all duration-500 relative overflow-hidden aspect-[16/10] rounded-sm flex flex-col justify-end"
@@ -433,6 +396,7 @@ export default function GamingHub({ isOpen, onClose }: GamingHubProps) {
                       <img
                         src={game.image_url}
                         alt={game.title}
+                        loading="lazy"
                         className="w-full h-full object-cover scale-100 group-hover:scale-105 transition-transform duration-700"
                         referrerPolicy="no-referrer"
                         onError={(e) => {
@@ -454,7 +418,17 @@ export default function GamingHub({ isOpen, onClose }: GamingHubProps) {
                       </h3>
                     </div>
                   </div>
-                ))}
+                )) : (
+                  <div className="col-span-full flex flex-col items-center justify-center gap-3 py-20 text-center">
+                    <div className="w-12 h-12 border border-dashed border-white/10 flex items-center justify-center mb-2">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-600">
+                        <rect x="2" y="3" width="20" height="14" rx="2" />
+                        <path d="M8 21h8M12 17v4" />
+                      </svg>
+                    </div>
+                    <p className="text-[10px] font-mono tracking-widest text-gray-600 uppercase">{t('no_games_yet')}</p>
+                  </div>
+                )}
               </div>
             ) : activeTab === "valProfile" ? (
               // TAB 2: VALORANT PLAYER PROFILE
