@@ -1,11 +1,13 @@
 import { Github, Facebook, Mail, Instagram, Loader2, Linkedin, Twitter, Youtube, Dribbble, Twitch, X } from "lucide-react";
 import { motion, AnimatePresence, Variants, useMotionValue, useSpring, useTransform } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, lazy, Suspense } from "react";
 import Background from "./Background";
 import { supabase } from "../lib/supabase";
 import { SiteInfo } from "../types";
-import GamingHub from "./GamingHub";
 import { useLanguage } from "../contexts/LanguageContext";
+import { getDeviceTier } from "../lib/performance";
+
+const GamingHub = lazy(() => import("./GamingHub"));
 
 const Tiktok = ({ size = 16 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -40,33 +42,34 @@ export default function Portfolio() {
   const [countdown, setCountdown] = useState<number | null>(null);
   const [targetUrl, setTargetUrl] = useState<string | null>(null);
 
-  // 3D Tilt Effect
+  // Device tier — detected once at render
+  const tier = getDeviceTier();
+  const enableTilt = tier >= 3;   // only strong devices
+  const enableMotion = tier >= 2; // weak devices skip all entry animations
+
+  // 3D Tilt Effect — motion values always declared (hooks rules), but only used when tier 3
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
-
   const springConfig = { damping: 20, stiffness: 100, mass: 1 };
   const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [10, -10]), springConfig);
   const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-10, 10]), springConfig);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!enableTilt) return;
     const rect = e.currentTarget.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-    const mouseXPos = e.clientX - rect.left;
-    const mouseYPos = e.clientY - rect.top;
+    mouseX.set((e.clientX - rect.left) / rect.width - 0.5);
+    mouseY.set((e.clientY - rect.top) / rect.height - 0.5);
+  }, [enableTilt, mouseX, mouseY]);
 
-    mouseX.set(mouseXPos / width - 0.5);
-    mouseY.set(mouseYPos / height - 0.5);
-  };
-
-  const handleMouseLeave = () => {
+  const handleMouseLeave = useCallback(() => {
     mouseX.set(0);
     mouseY.set(0);
-  };
+  }, [mouseX, mouseY]);
 
   useEffect(() => {
-    // Add artificial delay for smoother loading experience
-    const minLoadTime = new Promise(resolve => setTimeout(resolve, 1500));
+    // Weak devices: no artificial delay to show content immediately
+    const delay = tier >= 3 ? 1500 : tier === 2 ? 800 : 0;
+    const minLoadTime = new Promise(resolve => setTimeout(resolve, delay));
     Promise.all([fetchSiteInfo(), minLoadTime]).then(() => setLoading(false));
 
     // Đăng ký Supabase Realtime để đồng bộ tức thời khi Admin thay đổi dữ liệu
@@ -255,26 +258,27 @@ export default function Portfolio() {
     { icon: <Mail size={16} />, href: info.email?.startsWith('mailto:') ? info.email : `mailto:${info.email}`, label: "Email" },
   ].filter(link => link.href && link.href !== "#" && link.href !== "mailto:" && link.href !== "mailto:undefined");
 
-  const containerVariants: Variants = {
+  // Adaptive animation variants
+  const containerVariants: Variants = enableMotion ? {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.6,
+        staggerChildren: tier >= 3 ? 0.1 : 0.05,
+        delayChildren: tier >= 3 ? 0.6 : 0.2,
         ease: "easeOut"
       }
     }
-  };
+  } : { hidden: { opacity: 1 }, visible: { opacity: 1 } };
 
-  const itemVariants: Variants = {
-    hidden: { opacity: 0, y: 20 },
+  const itemVariants: Variants = enableMotion ? {
+    hidden: { opacity: 0, y: tier >= 3 ? 20 : 8 },
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.8, ease: "easeOut" }
+      transition: { duration: tier >= 3 ? 0.8 : 0.4, ease: "easeOut" }
     }
-  };
+  } : { hidden: { opacity: 1, y: 0 }, visible: { opacity: 1, y: 0 } };
 
   const [firstName, ...lastNameParts] = info.name.split(' ');
   const lastName = lastNameParts.join(' ');
@@ -687,7 +691,9 @@ export default function Portfolio() {
           )}
         </AnimatePresence>
 
-        <GamingHub isOpen={showGaming} onClose={() => setShowGaming(false)} />
+        <Suspense fallback={null}>
+          <GamingHub isOpen={showGaming} onClose={() => setShowGaming(false)} />
+        </Suspense>
 
         {/* Countdown Overlay */}
         <AnimatePresence>
