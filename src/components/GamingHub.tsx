@@ -528,24 +528,52 @@ export default function GamingHub({ isOpen, onClose }: GamingHubProps) {
                       </div>
                     </div>
 
-                    {/* Main Agents — hiện thanh cuộn ngang khi hover */}
+                    {/* Main Agents — click để xem thông tin đặc vụ */}
                     <div className="pt-4 border-t border-white/5 space-y-2">
                       <span className="text-[9px] font-mono tracking-widest text-gray-500 uppercase">{t('main_agents')}</span>
                       <div className="flex gap-3 overflow-x-auto custom-scrollbar pb-1.5">
                         {valProfile.mainAgentUuids?.map((uuid, idx) => {
                           const agent = apiAgents.find(a => a.uuid === uuid) || agents.find(a => a.uuid === uuid);
+                          const canNavigate = !!agent;
                           return (
-                            <div key={idx} className="flex items-center gap-3 p-2.5 bg-white/[0.02] border border-white/5 rounded-sm hover:border-amber-500/20 transition-colors shrink-0 min-w-[130px]">
-                              <div className="w-10 h-10 bg-black/40 border border-white/10 rounded-sm shrink-0 flex items-center justify-center">
+                            <button
+                              key={idx}
+                              onClick={() => {
+                                if (!agent) return;
+                                // Nếu data agents chưa load thì load trước rồi navigate
+                                if (agents.length === 0) {
+                                  loadLookupData().then(() => {
+                                    setSelectedAgent(agent);
+                                    setSelectedAbilityIndex(0);
+                                    setActiveTab("valorant");
+                                  });
+                                } else {
+                                  setSelectedAgent(agent);
+                                  setSelectedAbilityIndex(0);
+                                  setActiveTab("valorant");
+                                }
+                              }}
+                              disabled={!canNavigate}
+                              title={canNavigate ? (agent?.displayName + " — Xem thông tin đặc vụ") : t('loading')}
+                              className={`flex items-center gap-3 p-2.5 border rounded-sm shrink-0 min-w-[130px] transition-all duration-200 group text-left ${
+                                canNavigate
+                                  ? "bg-white/[0.02] border-white/5 hover:border-amber-500/50 hover:bg-amber-500/5 cursor-pointer"
+                                  : "bg-white/[0.01] border-white/5 opacity-50 cursor-default"
+                              }`}
+                            >
+                              <div className="w-10 h-10 bg-black/40 border border-white/10 rounded-sm shrink-0 flex items-center justify-center group-hover:border-amber-500/30 transition-colors">
                                 {agent?.displayIcon
                                   ? <img src={agent.displayIcon} alt={agent.displayName} className="w-full h-full object-contain" referrerPolicy="no-referrer" />
                                   : <span className="text-[9px] font-mono text-gray-500">?</span>}
                               </div>
                               <div className="min-w-0 overflow-hidden">
-                                <p className="text-[11px] font-bold text-white uppercase truncate">{agent?.displayName || t('loading')}</p>
+                                <p className="text-[11px] font-bold text-white uppercase truncate group-hover:text-amber-500 transition-colors">{agent?.displayName || t('loading')}</p>
                                 <p className="text-[9px] font-mono text-gray-500 uppercase truncate">{agent?.role?.displayName || "ROLE"}</p>
+                                {canNavigate && (
+                                  <p className="text-[7px] font-mono text-amber-500/50 uppercase mt-0.5 group-hover:text-amber-500/80 transition-colors">► Xem chi tiết</p>
+                                )}
                               </div>
-                            </div>
+                            </button>
                           );
                         })}
                       </div>
