@@ -1216,55 +1216,55 @@ export default function Admin() {
             <div className={activeAdminTab === 'visitors' ? 'block' : 'hidden'}>
               <div className="space-y-8">
                 {/* Stats Summary Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div className="grid grid-cols-3 gap-2.5 sm:gap-6">
                   {/* Card 1: Online */}
-                  <div className="p-6 border border-white/5 bg-white/[0.01] hover:border-amber-500/20 transition-all rounded-sm flex items-center justify-between">
-                    <div>
-                      <p className="text-[10px] font-mono tracking-widest text-gray-500 uppercase">{t('online')}</p>
-                      <h3 className="text-3xl font-display font-bold text-white mt-1">
+                  <div className="p-3 xs:p-4 sm:p-6 border border-white/5 bg-white/[0.01] hover:border-amber-500/20 transition-all rounded-sm flex items-center justify-between gap-1">
+                    <div className="min-w-0">
+                      <p className="text-[8px] xs:text-[10px] font-mono tracking-widest text-gray-500 uppercase truncate">{t('online')}</p>
+                      <h3 className="text-base xs:text-xl sm:text-3xl font-display font-bold text-white mt-1">
                         {visitorStats ? visitorStats.onlineCount : 0}
                       </h3>
                     </div>
-                    <div className="relative flex h-3.5 w-3.5">
+                    <div className="relative flex h-2 w-2 xs:h-3.5 xs:w-3.5 shrink-0">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 xs:h-3.5 xs:w-3.5 bg-emerald-500"></span>
                     </div>
                   </div>
 
                   {/* Card 2: Total Views */}
-                  <div className="p-6 border border-white/5 bg-white/[0.01] hover:border-amber-500/20 transition-all rounded-sm flex items-center justify-between">
-                    <div>
-                      <p className="text-[10px] font-mono tracking-widest text-gray-500 uppercase">{t('views')}</p>
-                      <h3 className="text-3xl font-display font-bold text-amber-500 mt-1">
+                  <div className="p-3 xs:p-4 sm:p-6 border border-white/5 bg-white/[0.01] hover:border-amber-500/20 transition-all rounded-sm flex items-center justify-between gap-1">
+                    <div className="min-w-0">
+                      <p className="text-[8px] xs:text-[10px] font-mono tracking-widest text-gray-500 uppercase truncate">{t('views')}</p>
+                      <h3 className="text-base xs:text-xl sm:text-3xl font-display font-bold text-amber-500 mt-1">
                         {visitorStats ? visitorStats.totalViews : 0}
                       </h3>
                     </div>
-                    <Globe className="w-6 h-6 text-gray-500" />
+                    <Globe className="w-3.5 h-3.5 xs:w-5 xs:h-5 sm:w-6 sm:h-6 text-gray-500 shrink-0" />
                   </div>
 
                   {/* Card 3: Unique Visitors */}
-                  <div className="p-6 border border-white/5 bg-white/[0.01] hover:border-amber-500/20 transition-all rounded-sm flex items-center justify-between">
-                    <div>
-                      <p className="text-[10px] font-mono tracking-widest text-gray-500 uppercase">Khách duy nhất</p>
-                      <h3 className="text-3xl font-display font-bold text-white mt-1">
+                  <div className="p-3 xs:p-4 sm:p-6 border border-white/5 bg-white/[0.01] hover:border-amber-500/20 transition-all rounded-sm flex items-center justify-between gap-1">
+                    <div className="min-w-0">
+                      <p className="text-[8px] xs:text-[10px] font-mono tracking-widest text-gray-500 uppercase truncate">Khách</p>
+                      <h3 className="text-base xs:text-xl sm:text-3xl font-display font-bold text-white mt-1">
                         {visitorStats ? visitorStats.totalVisitors : 0}
                       </h3>
                     </div>
-                    <User className="w-6 h-6 text-gray-500" />
+                    <User className="w-3.5 h-3.5 xs:w-5 xs:h-5 sm:w-6 sm:h-6 text-gray-500 shrink-0" />
                   </div>
                 </div>
 
                 {/* Actions & Refresh */}
-                <div className="flex flex-wrap justify-between items-center gap-4 pt-2">
-                  <div className="text-xs text-gray-500 font-mono">
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-2">
+                  <div className="text-[10px] sm:text-xs text-gray-500 font-mono order-2 sm:order-1 w-full sm:w-auto text-center sm:text-left">
                     Hiển thị tối đa 200 lượt truy cập mới nhất
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2.5 w-full sm:w-auto order-1 sm:order-2">
                     <button
                       type="button"
                       onClick={fetchVisitorLogs}
                       disabled={logsLoading}
-                      className="flex items-center gap-2 border border-white/10 hover:border-white/30 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white px-4 py-2 font-mono text-[10px] tracking-widest uppercase transition-all duration-300 disabled:opacity-50"
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 border border-white/10 hover:border-white/30 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white px-3 sm:px-4 py-2 font-mono text-[9px] sm:text-[10px] tracking-widest uppercase transition-all duration-300 disabled:opacity-50"
                     >
                       <RefreshCw className={`w-3.5 h-3.5 ${logsLoading ? 'animate-spin' : ''}`} />
                       <span>Làm mới</span>
@@ -1272,7 +1272,7 @@ export default function Admin() {
                     <button
                       type="button"
                       onClick={handleClearLogs}
-                      className="flex items-center gap-2 border border-red-500/30 hover:border-red-500 bg-red-950/20 hover:bg-red-950/50 text-red-400 hover:text-red-200 px-4 py-2 font-mono text-[10px] tracking-widest uppercase transition-all duration-300"
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 border border-red-500/30 hover:border-red-500 bg-red-950/20 hover:bg-red-950/50 text-red-400 hover:text-red-200 px-3 sm:px-4 py-2 font-mono text-[9px] sm:text-[10px] tracking-widest uppercase transition-all duration-300"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                       <span>{t('clear_logs')}</span>
@@ -1285,27 +1285,26 @@ export default function Admin() {
                   <div className="overflow-x-auto">
                     <table className="w-full text-left font-sans border-collapse">
                       <thead>
-                        <tr className="border-b border-white/10 bg-white/[0.02] font-mono text-[10px] tracking-widest text-gray-500 uppercase">
-                          <th className="py-4 px-6 font-medium">{t('status')}</th>
-                          <th className="py-4 px-6 font-medium">{t('ip_address')}</th>
-                          <th className="py-4 px-6 font-medium">{t('visitor_location')}</th>
-                          <th className="py-4 px-6 font-medium">{t('device_browser')}</th>
-                          <th className="py-4 px-6 font-medium">{t('screen_size')}</th>
-                          <th className="py-4 px-6 font-medium">{t('referrer')}</th>
-                          <th className="py-4 px-6 font-medium">{t('visit_time')}</th>
+                        <tr className="border-b border-white/10 bg-white/[0.02] font-mono text-[9px] sm:text-[10px] tracking-widest text-gray-500 uppercase">
+                          <th className="py-3 px-4 sm:py-4 sm:px-6 font-medium">{t('status')}</th>
+                          <th className="py-3 px-4 sm:py-4 sm:px-6 font-medium">{t('ip_address')}</th>
+                          <th className="py-3 px-4 sm:py-4 sm:px-6 font-medium">{t('visitor_location')}</th>
+                          <th className="py-3 px-4 sm:py-4 sm:px-6 font-medium">{t('device_browser')}</th>
+                          <th className="py-3 px-4 sm:py-4 sm:px-6 font-medium">{t('screen_size')}</th>
+                          <th className="py-3 px-4 sm:py-4 sm:px-6 font-medium">{t('visit_time')}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-white/5 text-[11px] sm:text-xs text-gray-300 font-mono">
                         {logsLoading && visitorLogs.length === 0 ? (
                           <tr>
-                            <td colSpan={7} className="py-12 text-center text-gray-500">
+                            <td colSpan={6} className="py-12 text-center text-gray-500">
                               <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-amber-500" />
                               Đang tải dữ liệu...
                             </td>
                           </tr>
                         ) : logsError ? (
                           <tr>
-                            <td colSpan={7} className="py-12 text-center text-red-400 font-sans">
+                            <td colSpan={6} className="py-12 text-center text-red-400 font-sans">
                               <AlertCircle className="w-6 h-6 mx-auto mb-2 text-red-500 animate-bounce" />
                               Lỗi tải dữ liệu: {logsError}
                               <br />
@@ -1316,7 +1315,7 @@ export default function Admin() {
                           </tr>
                         ) : visitorLogs.length === 0 ? (
                           <tr>
-                            <td colSpan={7} className="py-12 text-center text-gray-500">
+                            <td colSpan={6} className="py-12 text-center text-gray-500">
                               {t('no_data')}
                             </td>
                           </tr>
@@ -1325,7 +1324,7 @@ export default function Admin() {
                             const isOnline = new Date().getTime() - new Date(log.last_active_at).getTime() < 35000;
                             return (
                               <tr key={log.id} className="hover:bg-white/[0.01] transition-colors">
-                                <td className="py-4 px-6">
+                                <td className="py-3 px-4 sm:py-4 sm:px-6">
                                   <span className="flex items-center gap-2">
                                     <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' : 'bg-gray-600'}`}></span>
                                     <span className={`text-[10px] uppercase font-mono ${isOnline ? 'text-emerald-500' : 'text-gray-500'}`}>
@@ -1333,12 +1332,12 @@ export default function Admin() {
                                     </span>
                                   </span>
                                 </td>
-                                <td className="py-4 px-6 text-gray-300">
+                                <td className="py-3 px-4 sm:py-4 sm:px-6 text-gray-300">
                                   <span className="cursor-pointer hover:text-amber-500 select-all" title="Click to select/copy">
                                     {log.ip}
                                   </span>
                                 </td>
-                                <td className="py-4 px-6 text-gray-400">
+                                <td className="py-3 px-4 sm:py-4 sm:px-6 text-gray-400">
                                   <span className="flex items-center gap-1.5">
                                     <Globe className="w-3.5 h-3.5 text-gray-600" />
                                     <span>
@@ -1347,30 +1346,16 @@ export default function Admin() {
                                     </span>
                                   </span>
                                 </td>
-                                <td className="py-4 px-6 text-gray-400" title={log.user_agent}>
+                                <td className="py-3 px-4 sm:py-4 sm:px-6 text-gray-400" title={log.user_agent}>
                                   <span className="flex items-center gap-1.5">
                                     <Laptop className="w-3.5 h-3.5 text-gray-600" />
                                     <span>{parseUserAgent(log.user_agent)}</span>
                                   </span>
                                 </td>
-                                <td className="py-4 px-6 text-gray-500">
+                                <td className="py-3 px-4 sm:py-4 sm:px-6 text-gray-500">
                                   {log.screen_width && log.screen_height ? `${log.screen_width}x${log.screen_height}` : 'N/A'}
                                 </td>
-                                <td className="py-4 px-6 text-gray-400 max-w-[150px] truncate">
-                                  {log.referrer && log.referrer !== 'Direct' && log.referrer.startsWith('http') ? (
-                                    <a
-                                      href={log.referrer}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="flex items-center gap-1 text-amber-500/70 hover:text-amber-500 transition-colors"
-                                    >
-                                      <span className="truncate">{log.referrer.replace(/^https?:\/\//, '')}</span>
-                                    </a>
-                                  ) : (
-                                    <span className="text-gray-600">{log.referrer || 'Direct'}</span>
-                                  )}
-                                </td>
-                                <td className="py-4 px-6 text-gray-500">
+                                <td className="py-3 px-4 sm:py-4 sm:px-6 text-gray-500">
                                   {new Date(log.created_at).toLocaleString('vi-VN', {
                                     hour: '2-digit',
                                     minute: '2-digit',
