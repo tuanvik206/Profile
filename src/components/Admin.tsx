@@ -62,6 +62,7 @@ export default function Admin() {
   const [activeAdminTab, setActiveAdminTab] = useState<'info' | 'games' | 'valorant' | 'visitors'>('info');
   const [visitorLogs, setVisitorLogs] = useState<any[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
+  const [logsError, setLogsError] = useState<string | null>(null);
   const [visitorStats, setVisitorStats] = useState<{ onlineCount: number; totalViews: number; totalVisitors: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -179,6 +180,7 @@ export default function Admin() {
       }
     } catch (err: any) {
       console.error('Error fetching visitor logs:', err.message);
+      setLogsError(err.message || 'Lỗi không xác định khi tải dữ liệu');
     } finally {
       setLogsLoading(false);
     }
@@ -1299,6 +1301,17 @@ export default function Admin() {
                             <td colSpan={7} className="py-12 text-center text-gray-500">
                               <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-amber-500" />
                               Đang tải dữ liệu...
+                            </td>
+                          </tr>
+                        ) : logsError ? (
+                          <tr>
+                            <td colSpan={7} className="py-12 text-center text-red-400 font-sans">
+                              <AlertCircle className="w-6 h-6 mx-auto mb-2 text-red-500 animate-bounce" />
+                              Lỗi tải dữ liệu: {logsError}
+                              <br />
+                              <span className="text-[10px] text-gray-500 mt-2 block">
+                                Đảm bảo bạn đã chạy đầy đủ file visitor_migration.sql trong Supabase Dashboard - SQL Editor.
+                              </span>
                             </td>
                           </tr>
                         ) : visitorLogs.length === 0 ? (
