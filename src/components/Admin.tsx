@@ -30,7 +30,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import ValorantAdmin from './ValorantAdmin';
 
 export default function Admin() {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const navigate = useNavigate();
   const [session, setSession] = useState<Session | null>(null);
   const [authEmail, setAuthEmail] = useState('');
@@ -63,6 +63,7 @@ export default function Admin() {
   const [visitorLogs, setVisitorLogs] = useState<any[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
   const [logsError, setLogsError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const [visitorStats, setVisitorStats] = useState<{ onlineCount: number; totalViews: number; totalVisitors: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -159,6 +160,7 @@ export default function Admin() {
   const fetchVisitorLogs = async () => {
     if (!supabase) return;
     setLogsLoading(true);
+    setCurrentPage(1);
     try {
       const { data, error } = await supabase
         .from('visitor_logs')
@@ -200,6 +202,7 @@ export default function Admin() {
       
       setStatus({ type: 'success', message: 'Clear logs success!' });
       setVisitorLogs([]);
+      setCurrentPage(1);
       setVisitorStats({ onlineCount: 0, totalViews: 0, totalVisitors: 0 });
     } catch (err: any) {
       setStatus({ type: 'error', message: err.message || 'Failed to clear logs' });
@@ -755,6 +758,11 @@ export default function Admin() {
       </div>
     );
   }
+
+  const LOGS_PER_PAGE = 15;
+  const totalPages = Math.ceil(visitorLogs.length / LOGS_PER_PAGE);
+  const startIndex = (currentPage - 1) * LOGS_PER_PAGE;
+  const paginatedLogs = visitorLogs.slice(startIndex, startIndex + LOGS_PER_PAGE);
 
   return (
     <div className="min-h-screen bg-[#050505] text-white p-4 sm:p-8 md:p-12 font-sans relative overflow-x-hidden">
@@ -1320,7 +1328,7 @@ export default function Admin() {
                             </td>
                           </tr>
                         ) : (
-                          visitorLogs.map((log: any) => {
+                          paginatedLogs.map((log: any) => {
                             const isOnline = new Date().getTime() - new Date(log.last_active_at).getTime() < 35000;
                             return (
                               <tr key={log.id} className="hover:bg-white/[0.01] transition-colors">
@@ -1337,10 +1345,10 @@ export default function Admin() {
                                     {log.ip}
                                   </span>
                                 </td>
-                                <td className="py-3 px-4 sm:py-4 sm:px-6 text-gray-400">
-                                  <span className="flex items-center gap-1.5">
-                                    <Globe className="w-3.5 h-3.5 text-gray-600" />
-                                    <span>
+                                <td className="py-3 px-4 sm:py-4 sm:px-6">
+                                  <span className="flex items-center gap-1.5 text-gray-400">
+                                    <Globe className="w-3.5 h-3.5 text-gray-600 shrink-0" />
+                                    <span className="truncate">
                                       {log.city && log.city !== 'Unknown' ? `${log.city}, ` : ''}
                                       <span className="text-white">{log.country || 'Unknown'}</span>
                                     </span>
@@ -1372,6 +1380,70 @@ export default function Admin() {
                       </tbody>
                     </table>
                   </div>
+
+                  {/* Pagination Controls */}
+                  {totalPages > 1 && (
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t border-white/5 font-mono text-[10px] tracking-widest text-gray-500 uppercase">
+                      <div>
+                        {language === 'vi' 
+                          ? `Hiển thị từ ${startIndex + 1} đến ${Math.min(startIndex + LOGS_PER_PAGE, visitorLogs.length)} trên tổng số ${visitorLogs.length} lượt`
+                          : `Showing ${startIndex + 1} to ${Math.min(startIndex + LOGS_PER_PAGE, visitorLogs.length)} of ${visitorLogs.length} entries`
+                        }
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-wrap justify-center">
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                          disabled={currentPage === 1}
+                          className={`px-3 py-1.5 border rounded-sm transition-colors ${
+                            currentPage === 1
+                              ? 'border-white/5 text-gray-700 bg-white/[0.01] cursor-not-allowed'
+                              : 'border-white/10 text-white bg-white/5 hover:border-amber-500 hover:text-amber-500 cursor-pointer'
+                          }`}
+                        >
+                          &larr; {language === 'vi' ? 'Trước' : 'Prev'}
+                        </button>
+                        
+                        {Array.from({ length: totalPages }).map((_, idx) => {
+                          const pageNum = idx + 1;
+                          if (pageNum === 1 || pageNum === totalPages || Math.abs(pageNum - currentPage) <= 1) {
+                            return (
+                              <button
+                                key={pageNum}
+                                onClick={() => setCurrentPage(pageNum)}
+                                className={`w-8 py-1.5 border rounded-sm transition-colors cursor-pointer ${
+                                  currentPage === pageNum
+                                    ? 'bg-amber-500 border-amber-500 text-black font-bold'
+                                    : 'border-white/10 text-white bg-white/5 hover:border-amber-500 hover:text-amber-500'
+                                }`}
+                              >
+                                {pageNum}
+                              </button>
+                            );
+                          }
+                          if (pageNum === 2 || pageNum === totalPages - 1) {
+                            return (
+                              <span key={pageNum} className="px-1 text-gray-600">
+                                ...
+                              </span>
+                            );
+                          }
+                          return null;
+                        })}
+
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                          disabled={currentPage === totalPages}
+                          className={`px-3 py-1.5 border rounded-sm transition-colors ${
+                            currentPage === totalPages
+                              ? 'border-white/5 text-gray-700 bg-white/[0.01] cursor-not-allowed'
+                              : 'border-white/10 text-white bg-white/5 hover:border-amber-500 hover:text-amber-500 cursor-pointer'
+                          }`}
+                        >
+                          {language === 'vi' ? 'Sau' : 'Next'} &rarr;
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
