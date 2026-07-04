@@ -20,14 +20,31 @@ function generateUUID() {
   });
 }
 
-// Fetch visitor IP and location details
+// Fetch visitor IP and location details with cache in localStorage (12 hours)
 async function fetchGeoInfo(): Promise<GeoInfo> {
+  const CACHE_KEY = 'visitor_geo_info';
+  const CACHE_TIME_KEY = 'visitor_geo_info_time';
+  const CACHE_DURATION = 12 * 60 * 60 * 1000; // 12 hours
+
+  try {
+    const cachedData = localStorage.getItem(CACHE_KEY);
+    const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
+    const now = Date.now();
+
+    if (cachedData && cachedTime && now - Number(cachedTime) < CACHE_DURATION) {
+      return JSON.parse(cachedData);
+    }
+  } catch (e) {
+    console.warn('Failed to parse cached geo info:', e);
+  }
+
+  let geo: GeoInfo = {};
   try {
     // Try ipapi.co first
     const res = await fetch('https://ipapi.co/json/');
     if (res.ok) {
       const data = await res.json();
-      return {
+      geo = {
         ip: data.ip,
         city: data.city,
         country: data.country_name,
@@ -38,23 +55,35 @@ async function fetchGeoInfo(): Promise<GeoInfo> {
     console.warn('ipapi.co failed, trying fallback geolocation-db...', e);
   }
 
-  try {
-    // Fallback to geolocation-db
-    const res = await fetch('https://geolocation-db.com/json/');
-    if (res.ok) {
-      const data = await res.json();
-      return {
-        ip: data.IPv4 || data.ip,
-        city: data.city,
-        country: data.country_name,
-        country_code: data.country_code,
-      };
+  if (!geo.ip) {
+    try {
+      // Fallback to geolocation-db
+      const res = await fetch('https://geolocation-db.com/json/');
+      if (res.ok) {
+        const data = await res.json();
+        geo = {
+          ip: data.IPv4 || data.ip,
+          city: data.city,
+          country: data.country_name,
+          country_code: data.country_code,
+        };
+      }
+    } catch (e) {
+      console.warn('All geolocation services failed.', e);
     }
-  } catch (e) {
-    console.warn('All geolocation services failed.', e);
   }
 
-  return {};
+  // Cache the result if we got valid details
+  if (geo.ip) {
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify(geo));
+      localStorage.setItem(CACHE_TIME_KEY, String(Date.now()));
+    } catch (e) {
+      console.warn('Failed to save geo cache:', e);
+    }
+  }
+
+  return geo;
 }
 
 export function useVisitorTracker() {
@@ -78,18 +107,41 @@ export function useVisitorTracker() {
     }
 
     const initTracker = async () => {
-      // 1. Fetch geo location details
-      const geo = await fetchGeoInfo();
+      const path = window.location.pathname;
+      const pageViewKey = `page_view_logged_${path}`;
 
-      // 2. Gather browser details
+      // Deduplication check: if already logged for this path in this tab session
+      const alreadyLogged = sessionStorage.getItem(pageViewKey);
+
+      // Start heartbeat anyway (update last_active_at every 20s to stay online)
+      heartbeatInterval = setInterval(async () => {
+        const { error: updateError } = await supabase
+          .from('visitor_logs')
+          .update({ last_active_at: new Date().toISOString() })
+          .eq('session_id', sessionId);
+
+        if (updateError) {
+          console.warn('Heartbeat update failed:', updateError.message);
+        }
+      }, 20000);
+
+      if (alreadyLogged) {
+        // Just quick-update the existing session to stay online right now
+        await supabase
+          .from('visitor_logs')
+          .update({ last_active_at: new Date().toISOString() })
+          .eq('session_id', sessionId);
+        return;
+      }
+
+      // If not logged for this path in this session, insert a new record
+      const geo = await fetchGeoInfo();
       const userAgent = navigator.userAgent;
       const referrer = document.referrer || 'Direct';
-      const path = window.location.pathname;
       const screenWidth = window.innerWidth;
       const screenHeight = window.innerHeight;
 
       try {
-        // 3. Log visit in Supabase
         const { error } = await supabase
           .from('visitor_logs')
           .insert([
@@ -107,22 +159,11 @@ export function useVisitorTracker() {
             },
           ]);
 
-        if (error) {
+        if (!error) {
+          sessionStorage.setItem(pageViewKey, 'true');
+        } else {
           console.error('Failed to log visit:', error.message);
-          return;
         }
-
-        // 4. Start heartbeat (update last_active_at every 20s using session_id)
-        heartbeatInterval = setInterval(async () => {
-          const { error: updateError } = await supabase
-            .from('visitor_logs')
-            .update({ last_active_at: new Date().toISOString() })
-            .eq('session_id', sessionId);
-
-          if (updateError) {
-            console.warn('Heartbeat update failed:', updateError.message);
-          }
-        }, 20000);
       } catch (err) {
         console.error('Visitor logging error:', err);
       }
