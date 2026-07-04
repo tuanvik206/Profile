@@ -67,7 +67,6 @@ export function useVisitorTracker() {
   useEffect(() => {
     if (!supabase) return;
 
-    let visitId: string | null = null;
     let heartbeatInterval: any = null;
     let statsInterval: any = null;
 
@@ -91,7 +90,7 @@ export function useVisitorTracker() {
 
       try {
         // 3. Log visit in Supabase
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('visitor_logs')
           .insert([
             {
@@ -106,32 +105,24 @@ export function useVisitorTracker() {
               screen_width: screenWidth,
               screen_height: screenHeight,
             },
-          ])
-          .select('id')
-          .single();
+          ]);
 
         if (error) {
           console.error('Failed to log visit:', error.message);
           return;
         }
 
-        if (data && data.id) {
-          visitId = data.id;
+        // 4. Start heartbeat (update last_active_at every 20s using session_id)
+        heartbeatInterval = setInterval(async () => {
+          const { error: updateError } = await supabase
+            .from('visitor_logs')
+            .update({ last_active_at: new Date().toISOString() })
+            .eq('session_id', sessionId);
 
-          // 4. Start heartbeat (update last_active_at every 20s)
-          heartbeatInterval = setInterval(async () => {
-            if (visitId) {
-              const { error: updateError } = await supabase
-                .from('visitor_logs')
-                .update({ last_active_at: new Date().toISOString() })
-                .eq('id', visitId);
-
-              if (updateError) {
-                console.warn('Heartbeat update failed:', updateError.message);
-              }
-            }
-          }, 20000);
-        }
+          if (updateError) {
+            console.warn('Heartbeat update failed:', updateError.message);
+          }
+        }, 20000);
       } catch (err) {
         console.error('Visitor logging error:', err);
       }
