@@ -1,4 +1,4 @@
-import { Github, Facebook, Mail, Instagram, Loader2, Linkedin, Twitter, Youtube, Dribbble, Twitch, X } from "lucide-react";
+import { Github, Facebook, Mail, Instagram, Loader2, Linkedin, Twitter, Youtube, Dribbble, Twitch, X, Eye } from "lucide-react";
 import { motion, AnimatePresence, Variants, useMotionValue, useSpring, useTransform } from "motion/react";
 import { useEffect, useState, useCallback, lazy, Suspense } from "react";
 import Background from "./Background";
@@ -6,6 +6,7 @@ import { supabase } from "../lib/supabase";
 import { SiteInfo } from "../types";
 import { useLanguage } from "../contexts/LanguageContext";
 import { getDeviceTier } from "../lib/performance";
+import { useVisitorTracker } from "../lib/visitorTracker";
 
 const GamingHub = lazy(() => import("./GamingHub"));
 
@@ -34,6 +35,7 @@ const Discord = ({ size = 16 }: { size?: number }) => (
 
 export default function Portfolio() {
   const { t, language, setLanguage } = useLanguage();
+  const stats = useVisitorTracker();
   const [siteInfo, setSiteInfo] = useState<SiteInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [showGaming, setShowGaming] = useState(false);
@@ -862,6 +864,43 @@ export default function Portfolio() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Floating Visitor Stats (Mắt xem) */}
+        {stats && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1, duration: 0.5 }}
+            className="fixed bottom-6 left-6 z-40 flex items-center gap-2.5 px-4 py-2 border border-white/10 bg-[#050505]/70 backdrop-blur-md rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.4)] hover:border-amber-500/30 transition-all duration-300 select-none group"
+          >
+            {/* Pulsing indicator */}
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+
+            {/* Live Count */}
+            <div className="flex items-center gap-1.5 text-[10px] sm:text-xs font-mono font-medium text-gray-300">
+              <Eye size={12} className="text-gray-400 group-hover:text-amber-500 transition-colors" />
+              <span>
+                {stats.onlineCount}{' '}
+                <span className="text-gray-500 text-[9px] sm:text-[10px] uppercase tracking-wider font-light">
+                  {t('online')}
+                </span>
+              </span>
+            </div>
+
+            <span className="text-white/10 text-xs font-light">|</span>
+
+            {/* Total Views */}
+            <div className="text-[10px] sm:text-xs font-mono text-gray-400">
+              <span className="text-gray-300 font-medium">{stats.totalViews}</span>{' '}
+              <span className="text-gray-500 text-[9px] sm:text-[10px] uppercase tracking-wider font-light">
+                {t('views')}
+              </span>
+            </div>
+          </motion.div>
+        )}
 
       </main>
     </>

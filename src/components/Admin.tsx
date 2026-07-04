@@ -1,7 +1,27 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { SiteInfo } from '../types';
-import { Save, Loader2, AlertCircle, CheckCircle, LogOut, Gamepad2, User } from 'lucide-react';
+import { Save, Loader2, AlertCircle, CheckCircle, LogOut, Gamepad2, User, Eye, Trash2, Globe, Laptop, RefreshCw } from 'lucide-react';
+
+const parseUserAgent = (ua: string) => {
+  if (!ua) return 'Unknown';
+  let os = 'Unknown OS';
+  let browser = 'Unknown Browser';
+
+  if (ua.includes('Windows')) os = 'Windows';
+  else if (ua.includes('Macintosh') || ua.includes('Mac OS')) os = 'macOS';
+  else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
+  else if (ua.includes('Android')) os = 'Android';
+  else if (ua.includes('Linux')) os = 'Linux';
+
+  if (ua.includes('Chrome')) browser = 'Chrome';
+  else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
+  else if (ua.includes('Firefox')) browser = 'Firefox';
+  else if (ua.includes('Edg')) browser = 'Edge';
+  else if (ua.includes('OPR') || ua.includes('Opera')) browser = 'Opera';
+
+  return `${os} / ${browser}`;
+};
 import { useNavigate } from 'react-router-dom';
 import { Session } from '@supabase/supabase-js';
 import { DEFAULT_GAMES, FavoriteGame } from './GamingHub';
@@ -39,7 +59,10 @@ export default function Admin() {
     email: '',
   });
   const [games, setGames] = useState<FavoriteGame[]>([]);
-  const [activeAdminTab, setActiveAdminTab] = useState<'info' | 'games' | 'valorant'>('info');
+  const [activeAdminTab, setActiveAdminTab] = useState<'info' | 'games' | 'valorant' | 'visitors'>('info');
+  const [visitorLogs, setVisitorLogs] = useState<any[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+  const [visitorStats, setVisitorStats] = useState<{ onlineCount: number; totalViews: number; totalVisitors: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null, message: string }>({ type: null, message: '' });
@@ -86,6 +109,12 @@ export default function Admin() {
     }
   }, []);
 
+  useEffect(() => {
+    if (activeAdminTab === 'visitors' && session) {
+      fetchVisitorLogs();
+    }
+  }, [activeAdminTab, session]);
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!supabase) return;
@@ -124,6 +153,55 @@ export default function Admin() {
 
   const handleLogout = async () => {
     if (supabase) await supabase.auth.signOut();
+  };
+
+  const fetchVisitorLogs = async () => {
+    if (!supabase) return;
+    setLogsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('visitor_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(200);
+
+      if (error) throw error;
+      setVisitorLogs(data || []);
+
+      const { data: statsData, error: statsError } = await supabase.rpc('get_visitor_stats');
+      if (!statsError && statsData && statsData.length > 0) {
+        const s = statsData[0];
+        setVisitorStats({
+          onlineCount: Number(s.online_count || 0),
+          totalViews: Number(s.total_views || 0),
+          totalVisitors: Number(s.total_visitors || 0)
+        });
+      }
+    } catch (err: any) {
+      console.error('Error fetching visitor logs:', err.message);
+    } finally {
+      setLogsLoading(false);
+    }
+  };
+
+  const handleClearLogs = async () => {
+    if (!supabase) return;
+    if (!window.confirm(t('clear_logs_confirm'))) return;
+
+    try {
+      const { error } = await supabase
+        .from('visitor_logs')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000');
+
+      if (error) throw error;
+      
+      setStatus({ type: 'success', message: 'Clear logs success!' });
+      setVisitorLogs([]);
+      setVisitorStats({ onlineCount: 0, totalViews: 0, totalVisitors: 0 });
+    } catch (err: any) {
+      setStatus({ type: 'error', message: err.message || 'Failed to clear logs' });
+    }
   };
 
   const fetchInfo = async () => {
@@ -744,10 +822,21 @@ export default function Admin() {
               <Gamepad2 className="w-4 h-4" />
               <span>{t('val_profile')}</span>
             </button>
+            <button
+              type="button"
+              onClick={() => setActiveAdminTab('visitors')}
+              className={`flex items-center gap-2 px-6 py-4 font-mono text-[11px] tracking-widest uppercase transition-all duration-300 border-b-2 -mb-[1px] whitespace-nowrap ${activeAdminTab === 'visitors'
+                ? 'border-amber-500 text-amber-500 bg-amber-500/5'
+                : 'border-transparent text-gray-400 hover:text-white hover:bg-white/[0.02]'
+                }`}
+            >
+              <Eye className="w-4 h-4" />
+              <span>{t('visitor_tracking')}</span>
+            </button>
           </div>
 
           <div className="relative min-h-[600px]">
-            <form onSubmit={handleSave} className={`space-y-12 ${activeAdminTab !== 'valorant' ? 'block' : 'hidden'}`}>
+            <form onSubmit={handleSave} className={`space-y-12 ${activeAdminTab === 'info' || activeAdminTab === 'games' ? 'block' : 'hidden'}`}>
               <div className="space-y-12">
 
                 <div className={activeAdminTab === 'info' ? 'block' : 'hidden'}>
@@ -1121,6 +1210,172 @@ export default function Admin() {
             </form>
             <div className={activeAdminTab === 'valorant' ? 'block' : 'hidden'}>
               <ValorantAdmin />
+            </div>
+            <div className={activeAdminTab === 'visitors' ? 'block' : 'hidden'}>
+              <div className="space-y-8">
+                {/* Stats Summary Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                  {/* Card 1: Online */}
+                  <div className="p-6 border border-white/5 bg-white/[0.01] hover:border-amber-500/20 transition-all rounded-sm flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-mono tracking-widest text-gray-500 uppercase">{t('online')}</p>
+                      <h3 className="text-3xl font-display font-bold text-white mt-1">
+                        {visitorStats ? visitorStats.onlineCount : 0}
+                      </h3>
+                    </div>
+                    <div className="relative flex h-3.5 w-3.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500"></span>
+                    </div>
+                  </div>
+
+                  {/* Card 2: Total Views */}
+                  <div className="p-6 border border-white/5 bg-white/[0.01] hover:border-amber-500/20 transition-all rounded-sm flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-mono tracking-widest text-gray-500 uppercase">{t('views')}</p>
+                      <h3 className="text-3xl font-display font-bold text-amber-500 mt-1">
+                        {visitorStats ? visitorStats.totalViews : 0}
+                      </h3>
+                    </div>
+                    <Globe className="w-6 h-6 text-gray-500" />
+                  </div>
+
+                  {/* Card 3: Unique Visitors */}
+                  <div className="p-6 border border-white/5 bg-white/[0.01] hover:border-amber-500/20 transition-all rounded-sm flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-mono tracking-widest text-gray-500 uppercase">Khách duy nhất</p>
+                      <h3 className="text-3xl font-display font-bold text-white mt-1">
+                        {visitorStats ? visitorStats.totalVisitors : 0}
+                      </h3>
+                    </div>
+                    <User className="w-6 h-6 text-gray-500" />
+                  </div>
+                </div>
+
+                {/* Actions & Refresh */}
+                <div className="flex flex-wrap justify-between items-center gap-4 pt-2">
+                  <div className="text-xs text-gray-500 font-mono">
+                    Hiển thị tối đa 200 lượt truy cập mới nhất
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={fetchVisitorLogs}
+                      disabled={logsLoading}
+                      className="flex items-center gap-2 border border-white/10 hover:border-white/30 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white px-4 py-2 font-mono text-[10px] tracking-widest uppercase transition-all duration-300 disabled:opacity-50"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${logsLoading ? 'animate-spin' : ''}`} />
+                      <span>Làm mới</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleClearLogs}
+                      className="flex items-center gap-2 border border-red-500/30 hover:border-red-500 bg-red-950/20 hover:bg-red-950/50 text-red-400 hover:text-red-200 px-4 py-2 font-mono text-[10px] tracking-widest uppercase transition-all duration-300"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>{t('clear_logs')}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Logs Table */}
+                <div className="border border-white/10 rounded-sm overflow-hidden bg-black/40">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left font-sans border-collapse">
+                      <thead>
+                        <tr className="border-b border-white/10 bg-white/[0.02] font-mono text-[10px] tracking-widest text-gray-500 uppercase">
+                          <th className="py-4 px-6 font-medium">{t('status')}</th>
+                          <th className="py-4 px-6 font-medium">{t('ip_address')}</th>
+                          <th className="py-4 px-6 font-medium">{t('visitor_location')}</th>
+                          <th className="py-4 px-6 font-medium">{t('device_browser')}</th>
+                          <th className="py-4 px-6 font-medium">{t('screen_size')}</th>
+                          <th className="py-4 px-6 font-medium">{t('referrer')}</th>
+                          <th className="py-4 px-6 font-medium">{t('visit_time')}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5 text-[11px] sm:text-xs text-gray-300 font-mono">
+                        {logsLoading && visitorLogs.length === 0 ? (
+                          <tr>
+                            <td colSpan={7} className="py-12 text-center text-gray-500">
+                              <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-amber-500" />
+                              Đang tải dữ liệu...
+                            </td>
+                          </tr>
+                        ) : visitorLogs.length === 0 ? (
+                          <tr>
+                            <td colSpan={7} className="py-12 text-center text-gray-500">
+                              {t('no_data')}
+                            </td>
+                          </tr>
+                        ) : (
+                          visitorLogs.map((log: any) => {
+                            const isOnline = new Date().getTime() - new Date(log.last_active_at).getTime() < 35000;
+                            return (
+                              <tr key={log.id} className="hover:bg-white/[0.01] transition-colors">
+                                <td className="py-4 px-6">
+                                  <span className="flex items-center gap-2">
+                                    <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' : 'bg-gray-600'}`}></span>
+                                    <span className={`text-[10px] uppercase font-mono ${isOnline ? 'text-emerald-500' : 'text-gray-500'}`}>
+                                      {isOnline ? t('active') : t('offline')}
+                                    </span>
+                                  </span>
+                                </td>
+                                <td className="py-4 px-6 text-gray-300">
+                                  <span className="cursor-pointer hover:text-amber-500 select-all" title="Click to select/copy">
+                                    {log.ip}
+                                  </span>
+                                </td>
+                                <td className="py-4 px-6 text-gray-400">
+                                  <span className="flex items-center gap-1.5">
+                                    <Globe className="w-3.5 h-3.5 text-gray-600" />
+                                    <span>
+                                      {log.city && log.city !== 'Unknown' ? `${log.city}, ` : ''}
+                                      <span className="text-white">{log.country || 'Unknown'}</span>
+                                    </span>
+                                  </span>
+                                </td>
+                                <td className="py-4 px-6 text-gray-400" title={log.user_agent}>
+                                  <span className="flex items-center gap-1.5">
+                                    <Laptop className="w-3.5 h-3.5 text-gray-600" />
+                                    <span>{parseUserAgent(log.user_agent)}</span>
+                                  </span>
+                                </td>
+                                <td className="py-4 px-6 text-gray-500">
+                                  {log.screen_width && log.screen_height ? `${log.screen_width}x${log.screen_height}` : 'N/A'}
+                                </td>
+                                <td className="py-4 px-6 text-gray-400 max-w-[150px] truncate">
+                                  {log.referrer && log.referrer !== 'Direct' && log.referrer.startsWith('http') ? (
+                                    <a
+                                      href={log.referrer}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-1 text-amber-500/70 hover:text-amber-500 transition-colors"
+                                    >
+                                      <span className="truncate">{log.referrer.replace(/^https?:\/\//, '')}</span>
+                                    </a>
+                                  ) : (
+                                    <span className="text-gray-600">{log.referrer || 'Direct'}</span>
+                                  )}
+                                </td>
+                                <td className="py-4 px-6 text-gray-500">
+                                  {new Date(log.created_at).toLocaleString('vi-VN', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    second: '2-digit',
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric'
+                                  })}
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

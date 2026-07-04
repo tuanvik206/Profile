@@ -85,7 +85,22 @@ const translations = {
     'val_win_rate': 'Win Rate',
     'val_headshot': 'Headshot %',
     'val_matches': 'Matches (Số trận)',
-    'no_games_yet': 'Chưa có game nào được thêm'
+    'no_games_yet': 'Chưa có game nào được thêm',
+    'online': 'đang online',
+    'views': 'lượt truy cập',
+    'visitor_tracking': 'LƯỢT TRUY CẬP',
+    'ip_address': 'Địa chỉ IP',
+    'visitor_location': 'Vị trí',
+    'device_browser': 'Thiết bị & Trình duyệt',
+    'visit_time': 'Thời gian vào',
+    'status': 'Trạng thái',
+    'referrer': 'Nguồn giới thiệu',
+    'screen_size': 'Màn hình',
+    'clear_logs': 'XÓA NHẬT KÝ',
+    'clear_logs_confirm': 'Bạn có chắc chắn muốn xóa toàn bộ lịch sử truy cập?',
+    'no_data': 'Không có dữ liệu',
+    'active': 'Đang hoạt động',
+    'offline': 'Offline'
   },
   en: {
     // Portfolio
@@ -163,7 +178,22 @@ const translations = {
     'val_win_rate': 'Win Rate',
     'val_headshot': 'Headshot %',
     'val_matches': 'Matches Played',
-    'no_games_yet': 'No games added yet'
+    'no_games_yet': 'No games added yet',
+    'online': 'online',
+    'views': 'views',
+    'visitor_tracking': 'VISITORS',
+    'ip_address': 'IP Address',
+    'visitor_location': 'Location',
+    'device_browser': 'Device & Browser',
+    'visit_time': 'Visit Time',
+    'status': 'Status',
+    'referrer': 'Referrer',
+    'screen_size': 'Screen',
+    'clear_logs': 'CLEAR LOGS',
+    'clear_logs_confirm': 'Are you sure you want to clear all visit history?',
+    'no_data': 'No data available',
+    'active': 'Active',
+    'offline': 'Offline'
   }
 };
 
