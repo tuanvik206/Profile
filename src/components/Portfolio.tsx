@@ -1,6 +1,6 @@
-import { Github, Facebook, Mail, Instagram, Loader2, Linkedin, Twitter, Youtube, Dribbble, Twitch, X, Eye } from "lucide-react";
+import { Github, Facebook, Mail, Instagram, Loader2, Linkedin, Twitter, Youtube, Dribbble, Twitch, X, Eye, Play, Pause, Volume2, VolumeX } from "lucide-react";
 import { motion, AnimatePresence, Variants, useMotionValue, useSpring, useTransform } from "motion/react";
-import { useEffect, useState, useCallback, lazy, Suspense } from "react";
+import { useEffect, useState, useCallback, lazy, Suspense, useRef } from "react";
 import Background from "./Background";
 import { supabase } from "../lib/supabase";
 import { SiteInfo } from "../types";
@@ -43,6 +43,32 @@ export default function Portfolio() {
   const [showEducationPopup, setShowEducationPopup] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [targetUrl, setTargetUrl] = useState<string | null>(null);
+
+  // Audio Player State & Functions
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play().then(() => {
+        setIsPlaying(true);
+      }).catch(err => {
+        console.warn("Audio playback blocked by browser:", err);
+      });
+    }
+  };
+
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!audioRef.current) return;
+    audioRef.current.muted = !isMuted;
+    setIsMuted(!isMuted);
+  };
 
   // Device tier — detected once at render
   const tier = getDeviceTier();
@@ -880,6 +906,58 @@ export default function Portfolio() {
             </span>
           </motion.div>
         )}
+
+        {/* Audio Player Tag */}
+        <audio ref={audioRef} src="/lofi.mp3" loop />
+
+        {/* CSS Keyframes for Soundwave */}
+        <style dangerouslySetInnerHTML={{ __html: `
+          @keyframes soundwave {
+            0%, 100% { height: 3px; }
+            50% { height: 12px; }
+          }
+        `}} />
+
+        {/* Floating Music Widget */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.2, duration: 0.5 }}
+          onClick={togglePlay}
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 flex items-center gap-2 sm:gap-2.5 px-3 py-1.5 border border-white/10 bg-[#050505]/80 backdrop-blur-md rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.4)] hover:border-amber-500/30 transition-all duration-300 select-none group cursor-pointer"
+        >
+          {isPlaying ? (
+            /* Soundwave Equalizer Animation */
+            <div className="flex items-end gap-[2px] h-3 w-4 shrink-0 pb-[1px]">
+              <span className="w-[1.5px] bg-amber-500 rounded-full animate-[soundwave_0.8s_ease-in-out_infinite]" style={{ animationDelay: '0.1s' }} />
+              <span className="w-[1.5px] bg-amber-500 rounded-full animate-[soundwave_0.8s_ease-in-out_infinite]" style={{ animationDelay: '0.3s' }} />
+              <span className="w-[1.5px] bg-amber-500 rounded-full animate-[soundwave_0.8s_ease-in-out_infinite]" style={{ animationDelay: '0.2s' }} />
+              <span className="w-[1.5px] bg-amber-500 rounded-full animate-[soundwave_0.8s_ease-in-out_infinite]" style={{ animationDelay: '0.4s' }} />
+            </div>
+          ) : (
+            /* Play Icon */
+            <Play size={11} className="text-gray-400 group-hover:text-amber-500 transition-colors" />
+          )}
+
+          {/* Track Text */}
+          <span className="text-[10px] sm:text-xs font-mono font-medium text-gray-300 group-hover:text-amber-500 transition-colors">
+            {isPlaying 
+              ? 'Acoustic Chill'
+              : (language === 'vi' ? 'Phát Nhạc' : 'Play Music')
+            }
+          </span>
+
+          {/* Mute toggle button (only visible when playing) */}
+          {isPlaying && (
+            <button
+              onClick={toggleMute}
+              className="text-gray-500 hover:text-white transition-colors border-l border-white/10 pl-1.5 sm:pl-2 shrink-0 flex items-center justify-center"
+              title={isMuted ? (language === 'vi' ? 'Bật âm' : 'Unmute') : (language === 'vi' ? 'Tắt âm' : 'Mute')}
+            >
+              {isMuted ? <VolumeX size={11} /> : <Volume2 size={11} />}
+            </button>
+          )}
+        </motion.div>
 
       </main>
     </>
