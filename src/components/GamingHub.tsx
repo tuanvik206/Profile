@@ -470,7 +470,7 @@ export default function GamingHub({ isOpen, onClose }: GamingHubProps) {
                         {/* Main Agents */}
                         <div className="pt-3.5 border-t border-white/5 space-y-2">
                           <span className="text-[9px] font-mono tracking-widest text-gray-500 uppercase">{t('main_agents')}</span>
-                          <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-2.5 sm:gap-3 max-h-[160px] sm:max-h-[120px] lg:max-h-[160px] overflow-y-auto custom-scrollbar pr-1">
                             {valProfile.mainAgentUuids?.map((uuid, idx) => {
                               const agent = apiAgents.find(a => a.uuid === uuid) || agents.find(a => a.uuid === uuid);
                               const canNavigate = !!agent;
