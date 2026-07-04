@@ -456,48 +456,6 @@ export default function ValorantAdmin() {
             </select>
           </div>
         </div>
-
-        {/* Thêm các trường thống kê */}
-        <div className="flex flex-col gap-2">
-          <label className="text-[9px] font-mono tracking-widest text-gray-400 uppercase">{t('val_kd_ratio')}</label>
-          <input
-            type="text"
-            value={valProfile.kd || ''}
-            onChange={(e) => setValProfile({ ...valProfile, kd: e.target.value })}
-            className="bg-black/50 border border-white/10 p-2.5 text-xs focus:border-amber-500 focus:bg-amber-500/5 focus:outline-none text-white"
-            placeholder="VD: 1.25"
-          />
-        </div>
-        <div className="flex flex-col gap-2">
-          <label className="text-[9px] font-mono tracking-widest text-gray-400 uppercase">{t('val_win_rate')}</label>
-          <input
-            type="text"
-            value={valProfile.winrate || ''}
-            onChange={(e) => setValProfile({ ...valProfile, winrate: e.target.value })}
-            className="bg-black/50 border border-white/10 p-2.5 text-xs focus:border-amber-500 focus:bg-amber-500/5 focus:outline-none text-white"
-            placeholder="VD: 58.4%"
-          />
-        </div>
-        <div className="flex flex-col gap-2">
-          <label className="text-[9px] font-mono tracking-widest text-gray-400 uppercase">{t('val_headshot')}</label>
-          <input
-            type="text"
-            value={valProfile.headshot || ''}
-            onChange={(e) => setValProfile({ ...valProfile, headshot: e.target.value })}
-            className="bg-black/50 border border-white/10 p-2.5 text-xs focus:border-amber-500 focus:bg-amber-500/5 focus:outline-none text-white"
-            placeholder="VD: 24.8%"
-          />
-        </div>
-        <div className="flex flex-col gap-2">
-          <label className="text-[9px] font-mono tracking-widest text-gray-400 uppercase">{t('val_matches')}</label>
-          <input
-            type="text"
-            value={valProfile.matchesPlayed || ''}
-            onChange={(e) => setValProfile({ ...valProfile, matchesPlayed: e.target.value })}
-            className="bg-black/50 border border-white/10 p-2.5 text-xs focus:border-amber-500 focus:bg-amber-500/5 focus:outline-none text-white"
-            placeholder="VD: 5"
-          />
-        </div>
       </div>
 
       <div className="space-y-3">
