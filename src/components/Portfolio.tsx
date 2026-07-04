@@ -871,34 +871,13 @@ export default function Portfolio() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1, duration: 0.5 }}
-            className="fixed bottom-6 left-6 z-40 flex items-center gap-2.5 px-4 py-2 border border-white/10 bg-[#050505]/70 backdrop-blur-md rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.4)] hover:border-amber-500/30 transition-all duration-300 select-none group"
+            className="fixed bottom-4 left-4 sm:bottom-6 sm:left-6 z-40 flex items-center gap-1.5 px-3 py-1.5 border border-white/10 bg-[#050505]/80 backdrop-blur-md rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.4)] hover:border-amber-500/30 transition-all duration-300 select-none group"
+            title={t('views')}
           >
-            {/* Pulsing indicator */}
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            <Eye size={12} className="text-gray-400 group-hover:text-amber-500 transition-colors" />
+            <span className="text-[10px] sm:text-xs font-mono font-medium text-gray-300">
+              {stats.totalViews}
             </span>
-
-            {/* Live Count */}
-            <div className="flex items-center gap-1.5 text-[10px] sm:text-xs font-mono font-medium text-gray-300">
-              <Eye size={12} className="text-gray-400 group-hover:text-amber-500 transition-colors" />
-              <span>
-                {stats.onlineCount}{' '}
-                <span className="text-gray-500 text-[9px] sm:text-[10px] uppercase tracking-wider font-light">
-                  {t('online')}
-                </span>
-              </span>
-            </div>
-
-            <span className="text-white/10 text-xs font-light">|</span>
-
-            {/* Total Views */}
-            <div className="text-[10px] sm:text-xs font-mono text-gray-400">
-              <span className="text-gray-300 font-medium">{stats.totalViews}</span>{' '}
-              <span className="text-gray-500 text-[9px] sm:text-[10px] uppercase tracking-wider font-light">
-                {t('views')}
-              </span>
-            </div>
           </motion.div>
         )}
 
