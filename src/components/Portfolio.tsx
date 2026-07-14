@@ -33,6 +33,16 @@ const Discord = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
+const ScanlineOverlay = () => (
+  <div
+    className="fixed inset-0 pointer-events-none z-50 opacity-[0.15]"
+    style={{
+      backgroundImage:
+        "repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px)",
+    }}
+  />
+);
+
 export default function Portfolio() {
   const { t, language, setLanguage } = useLanguage();
   const stats = useVisitorTracker();
@@ -328,6 +338,7 @@ export default function Portfolio() {
       </AnimatePresence>
 
       <main className="relative min-h-screen flex flex-col items-center justify-center p-4 sm:p-8 font-sans overflow-hidden text-white bg-transparent pointer-events-none">
+        <ScanlineOverlay />
         {/* Animated Background Engine */}
         <div className="pointer-events-auto">
           <Background />
