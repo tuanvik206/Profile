@@ -1,6 +1,6 @@
-import { Github, Facebook, Mail, Instagram, Loader2, Linkedin, Twitter, Youtube, Dribbble, Twitch, X, Eye } from "lucide-react";
+import { Github, Facebook, Mail, Instagram, Linkedin, Twitter, Youtube, Dribbble, Twitch, X, Eye } from "lucide-react";
 import { motion, AnimatePresence, Variants, useMotionValue, useSpring, useTransform } from "motion/react";
-import { useEffect, useState, useCallback, lazy, Suspense } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Background from "./Background";
 import { supabase } from "../lib/supabase";
 import { SiteInfo } from "../types";
