@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { SiteInfo } from '../types';
-import { Save, Loader2, AlertCircle, CheckCircle, LogOut, User, Eye, Trash2, Globe, Laptop, RefreshCw } from 'lucide-react';
+import { Save, Loader2, AlertCircle, CheckCircle, LogOut, User, Eye, Trash2, Globe, Laptop, RefreshCw, Upload } from 'lucide-react';
 
 const parseUserAgent = (ua: string) => {
   if (!ua) return 'Unknown';
@@ -36,6 +36,7 @@ export default function Admin() {
   const [authLoading, setAuthLoading] = useState(false);
   const [authAttempts, setAuthAttempts] = useState(0);
   const [authLockUntil, setAuthLockUntil] = useState<number | null>(null);
+  const [uploadingField, setUploadingField] = useState<'avatar' | 'logo' | null>(null);
 
   const [info, setInfo] = useState<SiteInfo>({
     name: '',
@@ -60,6 +61,9 @@ export default function Admin() {
   const [logsLoading, setLogsLoading] = useState(false);
   const [logsError, setLogsError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [logFilter, setLogFilter] = useState<'all' | 'online'>('all');
+  const [selectedLog, setSelectedLog] = useState<any | null>(null);
   const [visitorStats, setVisitorStats] = useState<{ onlineCount: number; totalViews: number; totalVisitors: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -233,7 +237,92 @@ export default function Admin() {
     setInfo({ ...info, [e.target.name]: e.target.value });
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'avatar_url' | 'education_logo') => {
+    if (!supabase) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
 
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Dung lượng ảnh phải nhỏ hơn 5MB.");
+      return;
+    }
+
+    const fieldKey = field === 'avatar_url' ? 'avatar' : 'logo';
+    setUploadingField(fieldKey);
+    setStatus({ type: null, message: '' });
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+      const filePath = `uploads/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('portfolio-assets')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('portfolio-assets')
+        .getPublicUrl(filePath);
+
+      setInfo(prev => ({ ...prev, [field]: publicUrl }));
+      setStatus({ type: 'success', message: 'Tải ảnh lên thành công!' });
+      setTimeout(() => setStatus({ type: null, message: '' }), 3000);
+    } catch (err: any) {
+      console.error('Upload error:', err);
+      setStatus({ type: 'error', message: err.message || 'Lỗi khi tải ảnh lên' });
+    } finally {
+      setUploadingField(null);
+      e.target.value = '';
+    }
+  };
+
+  const getLast7DaysStats = () => {
+    const statsMap: { [key: string]: { views: number; unique: number } } = {};
+    const days: string[] = [];
+    const dateLabels: string[] = [];
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().split('T')[0];
+      const label = `${d.getDate()}/${d.getMonth() + 1}`;
+      statsMap[key] = { views: 0, unique: 0 };
+      days.push(key);
+      dateLabels.push(label);
+    }
+
+    const uniquePerDay: { [key: string]: Set<string> } = {};
+    days.forEach(day => {
+      uniquePerDay[day] = new Set<string>();
+    });
+
+    visitorLogs.forEach((log: any) => {
+      if (!log.created_at) return;
+      const logDate = new Date(log.created_at).toISOString().split('T')[0];
+      if (statsMap[logDate]) {
+        statsMap[logDate].views += 1;
+        if (log.session_id) {
+          uniquePerDay[logDate].add(log.session_id);
+        }
+      }
+    });
+
+    days.forEach(day => {
+      statsMap[day].unique = uniquePerDay[day].size;
+    });
+
+    return {
+      days,
+      dateLabels,
+      viewsData: days.map(day => statsMap[day].views),
+      uniqueData: days.map(day => statsMap[day].unique)
+    };
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -444,10 +533,23 @@ export default function Admin() {
     );
   }
 
+  const filteredLogs = visitorLogs.filter((log: any) => {
+    const query = searchQuery.toLowerCase().trim();
+    const matchesSearch = !query || 
+      (log.ip && log.ip.toLowerCase().includes(query)) ||
+      (log.city && log.city.toLowerCase().includes(query)) ||
+      (log.country && log.country.toLowerCase().includes(query));
+
+    const isOnline = new Date().getTime() - new Date(log.last_active_at).getTime() < 35000;
+    const matchesFilter = logFilter === 'all' || (logFilter === 'online' && isOnline);
+
+    return matchesSearch && matchesFilter;
+  });
+
   const LOGS_PER_PAGE = 15;
-  const totalPages = Math.ceil(visitorLogs.length / LOGS_PER_PAGE);
+  const totalPages = Math.ceil(filteredLogs.length / LOGS_PER_PAGE);
   const startIndex = (currentPage - 1) * LOGS_PER_PAGE;
-  const paginatedLogs = visitorLogs.slice(startIndex, startIndex + LOGS_PER_PAGE);
+  const paginatedLogs = filteredLogs.slice(startIndex, startIndex + LOGS_PER_PAGE);
 
   return (
     <div className="min-h-screen bg-[#050505] text-white p-4 sm:p-8 md:p-12 font-sans relative overflow-x-hidden">
@@ -528,7 +630,31 @@ export default function Admin() {
                         </div>
                         <div className="flex flex-col gap-2">
                           <label className="text-[10px] font-mono tracking-widest text-gray-400 uppercase">Link Avatar</label>
-                          <input type="text" name="avatar_url" value={info.avatar_url || ''} onChange={handleChange} className="bg-black/50 border border-white/10 p-3 text-sm focus:border-amber-500 focus:bg-amber-500/5 focus:outline-none transition-all placeholder-gray-700" placeholder="URL hình ảnh" />
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              name="avatar_url"
+                              value={info.avatar_url || ''}
+                              onChange={handleChange}
+                              className="flex-1 bg-black/50 border border-white/10 p-3 text-sm focus:border-amber-500 focus:bg-amber-500/5 focus:outline-none transition-all placeholder-gray-700"
+                              placeholder="URL hình ảnh"
+                            />
+                            <label className="flex items-center gap-2 px-4 bg-white/5 border border-white/10 hover:border-amber-500 hover:bg-amber-500/5 text-xs text-gray-400 hover:text-white cursor-pointer transition-all duration-300 select-none">
+                              {uploadingField === 'avatar' ? (
+                                <Loader2 className="w-4 h-4 animate-spin text-amber-500" />
+                              ) : (
+                                <Upload className="w-4 h-4" />
+                              )}
+                              <span>{uploadingField === 'avatar' ? 'Đang tải...' : 'Tải lên'}</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => handleImageUpload(e, 'avatar_url')}
+                                className="hidden"
+                                disabled={uploadingField !== null}
+                              />
+                            </label>
+                          </div>
                         </div>
                       </div>
 
@@ -593,7 +719,31 @@ export default function Admin() {
                       </div>
                       <div className="flex flex-col gap-2">
                         <label className="text-[10px] font-mono tracking-widest text-gray-400 uppercase">Logo Trường học (URL)</label>
-                        <input type="text" name="education_logo" value={info.education_logo || ''} onChange={handleChange} className="bg-black/50 border border-white/10 p-3 text-sm focus:border-amber-500 focus:bg-amber-500/5 focus:outline-none transition-all placeholder-gray-700" placeholder="https://..." />
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            name="education_logo"
+                            value={info.education_logo || ''}
+                            onChange={handleChange}
+                            className="flex-1 bg-black/50 border border-white/10 p-3 text-sm focus:border-amber-500 focus:bg-amber-500/5 focus:outline-none transition-all placeholder-gray-700"
+                            placeholder="https://..."
+                          />
+                          <label className="flex items-center gap-2 px-4 bg-white/5 border border-white/10 hover:border-amber-500 hover:bg-amber-500/5 text-xs text-gray-400 hover:text-white cursor-pointer transition-all duration-300 select-none">
+                            {uploadingField === 'logo' ? (
+                              <Loader2 className="w-4 h-4 animate-spin text-amber-500" />
+                            ) : (
+                              <Upload className="w-4 h-4" />
+                            )}
+                            <span>{uploadingField === 'logo' ? 'Đang tải...' : 'Tải lên'}</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => handleImageUpload(e, 'education_logo')}
+                              className="hidden"
+                              disabled={uploadingField !== null}
+                            />
+                          </label>
+                        </div>
                       </div>
                       <div className="flex flex-col gap-2">
                         <label className="text-[10px] font-mono tracking-widest text-gray-400 uppercase">Giới thiệu ngắn về học vấn (VI)</label>
@@ -735,6 +885,179 @@ export default function Admin() {
                   </div>
                 </div>
 
+                {/* SVG Analytics Chart */}
+                {visitorLogs.length > 0 && (() => {
+                  const chartData = getLast7DaysStats();
+                  const maxVal = Math.max(...chartData.viewsData, ...chartData.uniqueData, 5);
+                  
+                  const viewsPoints = chartData.viewsData.map((val, i) => ({
+                    x: 40 + i * 73.33,
+                    y: 170 - (val / maxVal) * 140
+                  }));
+                  const viewsPath = viewsPoints.length > 0 
+                    ? `M ${viewsPoints[0].x} ${viewsPoints[0].y} ` + viewsPoints.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ')
+                    : '';
+                  const viewsAreaPath = viewsPoints.length > 0
+                    ? `${viewsPath} L ${viewsPoints[viewsPoints.length - 1].x} 170 L ${viewsPoints[0].x} 170 Z`
+                    : '';
+
+                  const uniquePoints = chartData.uniqueData.map((val, i) => ({
+                    x: 40 + i * 73.33,
+                    y: 170 - (val / maxVal) * 140
+                  }));
+                  const uniquePath = uniquePoints.length > 0 
+                    ? `M ${uniquePoints[0].x} ${uniquePoints[0].y} ` + uniquePoints.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ')
+                    : '';
+                  const uniqueAreaPath = uniquePoints.length > 0
+                    ? `${uniquePath} L ${uniquePoints[uniquePoints.length - 1].x} 170 L ${uniquePoints[0].x} 170 Z`
+                    : '';
+
+                  return (
+                    <div className="border border-white/10 bg-white/[0.01] p-4 sm:p-6 mt-6 rounded-sm">
+                      <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 bg-amber-500 rounded-full"></div>
+                          <span className="font-mono text-[10px] tracking-widest text-gray-400 uppercase">
+                            Thống kê truy cập (7 ngày gần nhất)
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-4 text-[9px] font-mono tracking-widest uppercase">
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-2.5 h-1 bg-amber-500 rounded-full inline-block"></span>
+                            <span className="text-gray-400">Lượt Xem</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-2.5 h-1 bg-cyan-500 rounded-full inline-block"></span>
+                            <span className="text-gray-400">Khách</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="w-full relative h-[200px]">
+                        <svg viewBox="0 0 500 200" className="w-full h-full" preserveAspectRatio="none">
+                          <defs>
+                            <filter id="glow-views" x="-20%" y="-20%" width="140%" height="140%">
+                              <feDropShadow dx="0" dy="2" stdDeviation="4" floodColor="#f59e0b" floodOpacity="0.4" />
+                            </filter>
+                            <filter id="glow-unique" x="-20%" y="-20%" width="140%" height="140%">
+                              <feDropShadow dx="0" dy="2" stdDeviation="4" floodColor="#06b6d4" floodOpacity="0.4" />
+                            </filter>
+                            <linearGradient id="grad-views" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.2" />
+                              <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.0" />
+                            </linearGradient>
+                            <linearGradient id="grad-unique" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.2" />
+                              <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.0" />
+                            </linearGradient>
+                          </defs>
+
+                          {/* Grid lines */}
+                          <line x1="40" y1="30" x2="480" y2="30" stroke="rgba(255,255,255,0.05)" strokeDasharray="3" />
+                          <line x1="40" y1="100" x2="480" y2="100" stroke="rgba(255,255,255,0.05)" strokeDasharray="3" />
+                          <line x1="40" y1="170" x2="480" y2="170" stroke="rgba(255,255,255,0.1)" />
+
+                          {/* Grid text values */}
+                          <text x="30" y="34" fill="rgba(255,255,255,0.3)" fontSize="8" fontFamily="monospace" textAnchor="end">{Math.round(maxVal)}</text>
+                          <text x="30" y="104" fill="rgba(255,255,255,0.3)" fontSize="8" fontFamily="monospace" textAnchor="end">{Math.round(maxVal / 2)}</text>
+                          <text x="30" y="174" fill="rgba(255,255,255,0.3)" fontSize="8" fontFamily="monospace" textAnchor="end">0</text>
+
+                          {/* Area Paths */}
+                          {viewsAreaPath && <path d={viewsAreaPath} fill="url(#grad-views)" />}
+                          {uniqueAreaPath && <path d={uniqueAreaPath} fill="url(#grad-unique)" />}
+
+                          {/* Line Paths */}
+                          {viewsPath && (
+                            <path d={viewsPath} fill="none" stroke="#f59e0b" strokeWidth="2" filter="url(#glow-views)" strokeLinecap="round" strokeLinejoin="round" />
+                          )}
+                          {uniquePath && (
+                            <path d={uniquePath} fill="none" stroke="#06b6d4" strokeWidth="2" filter="url(#glow-unique)" strokeLinecap="round" strokeLinejoin="round" />
+                          )}
+
+                          {/* X-axis labels */}
+                          {chartData.dateLabels.map((label, idx) => (
+                            <text key={idx} x={40 + idx * 73.33} y="190" fill="rgba(255,255,255,0.4)" fontSize="8" fontFamily="monospace" textAnchor="middle">
+                              {label}
+                            </text>
+                          ))}
+
+                          {/* Interactive dots and text labels for values */}
+                          {viewsPoints.map((pt, idx) => (
+                            <g key={`views-pt-${idx}`}>
+                              <circle cx={pt.x} cy={pt.y} r="3" fill="#f59e0b" stroke="#050505" strokeWidth="1" />
+                              {chartData.viewsData[idx] > 0 && (
+                                <text x={pt.x} y={pt.y - 8} fill="#f59e0b" fontSize="8" fontFamily="monospace" fontWeight="bold" textAnchor="middle">
+                                  {chartData.viewsData[idx]}
+                                </text>
+                              )}
+                            </g>
+                          ))}
+
+                          {uniquePoints.map((pt, idx) => (
+                            <g key={`unique-pt-${idx}`}>
+                              <circle cx={pt.x} cy={pt.y} r="3" fill="#06b6d4" stroke="#050505" strokeWidth="1" />
+                              {chartData.uniqueData[idx] > 0 && (
+                                <text x={pt.x} y={pt.y - 8} fill="#06b6d4" fontSize="8" fontFamily="monospace" fontWeight="bold" textAnchor="middle">
+                                  {chartData.uniqueData[idx]}
+                                </text>
+                              )}
+                            </g>
+                          ))}
+                        </svg>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Search & Filter Controls */}
+                <div className="flex flex-col sm:flex-row gap-4 border-b border-white/5 pb-6 mt-6">
+                  {/* Search Bar */}
+                  <div className="flex-1 relative">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setCurrentPage(1);
+                      }}
+                      placeholder="Tìm kiếm theo IP, Quốc gia, Thành phố..."
+                      className="w-full bg-black/50 border border-white/10 p-2.5 text-xs font-mono focus:border-amber-500 focus:bg-amber-500/5 focus:outline-none transition-all placeholder-gray-700 rounded-sm"
+                    />
+                  </div>
+                  {/* Filter Tabs */}
+                  <div className="flex gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLogFilter('all');
+                        setCurrentPage(1);
+                      }}
+                      className={`px-4 py-2 font-mono text-[10px] tracking-widest uppercase transition-all duration-200 border rounded-sm ${
+                        logFilter === 'all'
+                          ? 'border-amber-500/50 bg-amber-500/10 text-amber-500'
+                          : 'border-white/10 bg-transparent text-gray-400 hover:text-white hover:border-white/20'
+                      }`}
+                    >
+                      Tất cả
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLogFilter('online');
+                        setCurrentPage(1);
+                      }}
+                      className={`px-4 py-2 font-mono text-[10px] tracking-widest uppercase transition-all duration-200 border rounded-sm flex items-center gap-2 ${
+                        logFilter === 'online'
+                          ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-500'
+                          : 'border-white/10 bg-transparent text-gray-400 hover:text-white hover:border-white/20'
+                      }`}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                      Đang Online
+                    </button>
+                  </div>
+                </div>
+
                 {/* Actions & Refresh */}
                 <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-2">
                   <div className="text-[10px] sm:text-xs text-gray-500 font-mono order-2 sm:order-1 w-full sm:w-auto text-center sm:text-left">
@@ -804,7 +1127,7 @@ export default function Admin() {
                           paginatedLogs.map((log: any) => {
                             const isOnline = new Date().getTime() - new Date(log.last_active_at).getTime() < 35000;
                             return (
-                              <tr key={log.id} className="hover:bg-white/[0.01] transition-colors">
+                              <tr key={log.id} onClick={() => setSelectedLog(log)} className="hover:bg-white/[0.03] transition-colors cursor-pointer" title="Click to view details">
                                 <td className="py-3 px-4 sm:py-4 sm:px-6">
                                   <span className="flex items-center gap-2">
                                     <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' : 'bg-gray-600'}`}></span>
@@ -814,7 +1137,11 @@ export default function Admin() {
                                   </span>
                                 </td>
                                 <td className="py-3 px-4 sm:py-4 sm:px-6 text-gray-300">
-                                  <span className="cursor-pointer hover:text-amber-500 select-all" title="Click to select/copy">
+                                  <span 
+                                    className="cursor-pointer hover:text-amber-500 select-all font-bold" 
+                                    title="Click to select/copy"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
                                     {log.ip}
                                   </span>
                                 </td>
@@ -859,8 +1186,8 @@ export default function Admin() {
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t border-white/5 font-mono text-[10px] tracking-widest text-gray-500 uppercase">
                       <div>
                         {language === 'vi' 
-                          ? `Hiển thị từ ${startIndex + 1} đến ${Math.min(startIndex + LOGS_PER_PAGE, visitorLogs.length)} trên tổng số ${visitorLogs.length} lượt`
-                          : `Showing ${startIndex + 1} to ${Math.min(startIndex + LOGS_PER_PAGE, visitorLogs.length)} of ${visitorLogs.length} entries`
+                          ? `Hiển thị từ ${startIndex + 1} đến ${Math.min(startIndex + LOGS_PER_PAGE, filteredLogs.length)} trên tổng số ${filteredLogs.length} lượt`
+                          : `Showing ${startIndex + 1} to ${Math.min(startIndex + LOGS_PER_PAGE, filteredLogs.length)} of ${filteredLogs.length} entries`
                         }
                       </div>
                       <div className="flex items-center gap-1.5 flex-wrap justify-center">
@@ -923,6 +1250,107 @@ export default function Admin() {
           </div>
         </div>
       </div>
+      {/* Visitor Log Detail Modal */}
+      {selectedLog && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={() => setSelectedLog(null)}>
+          <div className="bg-[#050505] border border-white/10 p-6 sm:p-8 max-w-lg w-full relative overflow-hidden flex flex-col font-mono text-xs text-gray-300" onClick={(e) => e.stopPropagation()}>
+            <div className="absolute top-0 left-0 w-3 h-3 border-t border-l border-amber-500"></div>
+            <div className="absolute top-0 right-0 w-3 h-3 border-t border-r border-amber-500"></div>
+            <div className="absolute bottom-0 left-0 w-3 h-3 border-b border-l border-amber-500"></div>
+            <div className="absolute bottom-0 right-0 w-3 h-3 border-b border-r border-amber-500"></div>
+
+            <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
+              <span className="text-amber-500 text-[10px] tracking-widest uppercase">— CHI TIẾT TRUY CẬP</span>
+              <button onClick={() => setSelectedLog(null)} className="text-gray-500 hover:text-white transition-colors cursor-pointer text-base font-sans">✕</button>
+            </div>
+
+            <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
+              <div>
+                <span className="text-gray-500 block text-[9px] uppercase tracking-wider mb-1">Địa chỉ IP</span>
+                <span className="text-white text-sm select-all font-bold">{selectedLog.ip || 'Unknown'}</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <span className="text-gray-500 block text-[9px] uppercase tracking-wider mb-1">Vị trí</span>
+                  <span className="text-white">
+                    {selectedLog.city && selectedLog.city !== 'Unknown' ? `${selectedLog.city}, ` : ''}
+                    {selectedLog.country || 'Unknown'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-500 block text-[9px] uppercase tracking-wider mb-1">Mã quốc gia</span>
+                  <span className="text-white">{selectedLog.country_code || 'Unknown'}</span>
+                </div>
+              </div>
+
+              <div>
+                <span className="text-gray-500 block text-[9px] uppercase tracking-wider mb-1">Đường dẫn truy cập</span>
+                <span className="text-emerald-500 select-all">{selectedLog.path || '/'}</span>
+              </div>
+
+              <div>
+                <span className="text-gray-500 block text-[9px] uppercase tracking-wider mb-1">Nguồn giới thiệu (Referrer)</span>
+                <span className="text-white select-all break-all">{selectedLog.referrer || 'Direct'}</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <span className="text-gray-500 block text-[9px] uppercase tracking-wider mb-1">Màn hình</span>
+                  <span className="text-white">{selectedLog.screen_width && selectedLog.screen_height ? `${selectedLog.screen_width}x${selectedLog.screen_height}` : 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500 block text-[9px] uppercase tracking-wider mb-1">Thiết bị & Trình duyệt</span>
+                  <span className="text-white">{parseUserAgent(selectedLog.user_agent)}</span>
+                </div>
+              </div>
+
+              <div>
+                <span className="text-gray-500 block text-[9px] uppercase tracking-wider mb-1">User Agent đầy đủ</span>
+                <span className="text-gray-400 block p-2 bg-white/[0.02] border border-white/5 text-[10px] break-all select-all leading-normal max-h-20 overflow-y-auto custom-scrollbar">
+                  {selectedLog.user_agent}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <span className="text-gray-500 block text-[9px] uppercase tracking-wider mb-1">Thời gian vào</span>
+                  <span className="text-white text-[10px]">
+                    {new Date(selectedLog.created_at).toLocaleString('vi-VN')}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-500 block text-[9px] uppercase tracking-wider mb-1">Hoạt động cuối</span>
+                  <span className="text-white text-[10px]">
+                    {new Date(selectedLog.last_active_at).toLocaleString('vi-VN')}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 border-t border-white/10 pt-6 mt-6">
+              {((selectedLog.city && selectedLog.city !== 'Unknown') || (selectedLog.country && selectedLog.country !== 'Unknown')) && (
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                    `${selectedLog.city || ''} ${selectedLog.country || ''}`.trim()
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 text-center py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-mono font-bold text-[10px] tracking-widest uppercase transition-all duration-200"
+                >
+                  Xem trên Bản đồ
+                </a>
+              )}
+              <button
+                onClick={() => setSelectedLog(null)}
+                className="flex-1 py-2.5 border border-white/10 hover:border-white/30 text-gray-400 hover:text-white font-mono text-[10px] tracking-widest uppercase transition-all duration-200 cursor-pointer"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

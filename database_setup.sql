@@ -122,7 +122,7 @@ CREATE POLICY "Allow admin delete visitor_logs" ON public.visitor_logs
 -- ------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.get_visitor_stats()
 RETURNS TABLE (online_count BIGINT, total_views BIGINT, total_visitors BIGINT)
-LANGUAGE plpgsql SECURITY DEFINER AS $$
+LANGUAGE plpgsql SECURITY DEFINER AS $
 DECLARE
     v_online BIGINT;
     v_views BIGINT;
@@ -144,3 +144,30 @@ BEGIN
     RETURN QUERY SELECT v_online, v_views, v_visitors;
 END;
 $$;
+
+
+-- ------------------------------------------------------------
+-- 4. Storage Policies for portfolio-assets
+-- ------------------------------------------------------------
+-- Create bucket if it doesn't exist
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES ('portfolio-assets', 'portfolio-assets', true, 5242880, ARRAY['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml'])
+ON CONFLICT (id) DO NOTHING;
+
+-- Drop existing policies if any
+DROP POLICY IF EXISTS "Allow public read from portfolio-assets" ON storage.objects;
+DROP POLICY IF EXISTS "Allow admin upload to portfolio-assets" ON storage.objects;
+DROP POLICY IF EXISTS "Allow admin delete from portfolio-assets" ON storage.objects;
+
+-- Cho phép mọi người đọc ảnh công khai từ bucket portfolio-assets
+CREATE POLICY "Allow public read from portfolio-assets" ON storage.objects
+    FOR SELECT USING (bucket_id = 'portfolio-assets');
+
+-- Chỉ cho phép admin đã đăng nhập upload ảnh lên bucket portfolio-assets
+CREATE POLICY "Allow admin upload to portfolio-assets" ON storage.objects
+    FOR INSERT TO authenticated WITH CHECK (bucket_id = 'portfolio-assets');
+
+-- Chỉ cho phép admin đã đăng nhập xóa ảnh trong bucket portfolio-assets
+CREATE POLICY "Allow admin delete from portfolio-assets" ON storage.objects
+    FOR DELETE TO authenticated USING (bucket_id = 'portfolio-assets');
+
