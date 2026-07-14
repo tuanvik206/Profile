@@ -1,38 +1,3 @@
-export interface FavoriteGame {
-  id: string;
-  title: string;
-  category: string;
-  developer: string;
-  rank: string;
-  image_url: string;
-  description: string;
-}
-
-export interface ValorantSkin {
-  weaponUuid?: string;
-  weaponName: string;
-  skinUuid?: string;
-  skinName: string;
-  skinIcon: string;
-  englishName?: string;
-}
-
-export interface ValorantProfile {
-  ingameName: string;
-  level: string;
-  server: string;
-  rankName: string;
-  rankIcon: string;
-  mainAgentUuids: string[];
-  mainAgentUuid1?: string;
-  mainAgentUuid2?: string;
-  favoriteSkins: ValorantSkin[];
-  kd?: string;
-  winrate?: string;
-  headshot?: string;
-  matchesPlayed?: string;
-}
-
 export interface SiteInfo {
   id?: number;
   name: string;
@@ -60,9 +25,8 @@ export interface SiteInfo {
   behance_url?: string;
   twitch_url?: string;
   discord_url?: string;
-  favorite_games?: FavoriteGame[];
-  valorant_profile?: ValorantProfile;
   est_year?: string;
   coordinates?: string;
   location_text?: string;
 }
+

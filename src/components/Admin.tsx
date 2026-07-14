@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { SiteInfo } from '../types';
-import { Save, Loader2, AlertCircle, CheckCircle, LogOut, Gamepad2, User, Eye, Trash2, Globe, Laptop, RefreshCw } from 'lucide-react';
+import { Save, Loader2, AlertCircle, CheckCircle, LogOut, User, Eye, Trash2, Globe, Laptop, RefreshCw } from 'lucide-react';
 
 const parseUserAgent = (ua: string) => {
   if (!ua) return 'Unknown';
@@ -24,10 +24,7 @@ const parseUserAgent = (ua: string) => {
 };
 import { useNavigate } from 'react-router-dom';
 import { Session } from '@supabase/supabase-js';
-import { DEFAULT_GAMES, FavoriteGame } from './GamingHub';
 import { useLanguage } from '../contexts/LanguageContext';
-
-import ValorantAdmin from './ValorantAdmin';
 
 export default function Admin() {
   const { language, t } = useLanguage();
@@ -58,8 +55,7 @@ export default function Admin() {
     github_url: '',
     email: '',
   });
-  const [games, setGames] = useState<FavoriteGame[]>([]);
-  const [activeAdminTab, setActiveAdminTab] = useState<'info' | 'games' | 'valorant' | 'visitors'>('info');
+  const [activeAdminTab, setActiveAdminTab] = useState<'info' | 'visitors'>('info');
   const [visitorLogs, setVisitorLogs] = useState<any[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
   const [logsError, setLogsError] = useState<string | null>(null);
@@ -69,23 +65,8 @@ export default function Admin() {
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null, message: string }>({ type: null, message: '' });
   const [configured, setConfigured] = useState(false);
-  const [searchResults, setSearchResults] = useState<{ [key: number]: any[] }>({});
-  const [searchLoading, setSearchLoading] = useState<{ [key: number]: boolean }>({});
 
-  // Load games from localStorage on mount as fallback
-  useEffect(() => {
-    // Only load from localStorage initially, fetchInfo will override if Supabase has data
-    const stored = localStorage.getItem('favorite_games');
-    if (stored) {
-      try {
-        setGames(JSON.parse(stored));
-      } catch (e) {
-        setGames(DEFAULT_GAMES);
-      }
-    } else {
-      setGames(DEFAULT_GAMES);
-    }
-  }, []);
+
 
   useEffect(() => {
     if (supabase) {
@@ -217,7 +198,7 @@ export default function Admin() {
         console.error("Error fetching site info:", error.message || error);
       }
       if (data) {
-        const { favorite_games, ...restInfo } = data;
+        const { favorite_games, valorant_profile, ...restInfo } = data;
 
         // Fallback for fields that might not exist in Supabase yet
         if (!restInfo.education_logo && localStorage.getItem('education_logo')) {
@@ -240,56 +221,6 @@ export default function Admin() {
         }
 
         setInfo(restInfo);
-        if (favorite_games && Array.isArray(favorite_games)) {
-          const cleanedGames = favorite_games.map(g => {
-            const lowTitle = g.title?.toLowerCase() || '';
-            const lowUrl = g.image_url || '';
-            if (lowTitle === 'valorant' && (lowUrl.includes('unsplash.com') || lowUrl.includes('epicgames.com'))) {
-              return {
-                ...g,
-                image_url: 'https://media.valorant-api.com/playercards/9fb348bc-41a0-91ad-8a3e-818035c4e561/wideart.png'
-              };
-            }
-            if (lowTitle === 'league of legends' && (lowUrl.includes('unsplash.com') || lowUrl.includes('epicgames.com'))) {
-              return {
-                ...g,
-                image_url: 'https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Jinx_0.jpg'
-              };
-            }
-            if (lowTitle === 'teamfight tactics' && (lowUrl.includes('unsplash.com') || lowUrl.includes('epicgames.com'))) {
-              return {
-                ...g,
-                image_url: 'https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Teemo_0.jpg'
-              };
-            }
-            if (lowTitle === 'legends of runeterra' && (lowUrl.includes('unsplash.com') || lowUrl.includes('epicgames.com'))) {
-              return {
-                ...g,
-                image_url: 'https://ddragon.leagueoflegends.com/cdn/img/champion/splash/AurelionSol_0.jpg'
-              };
-            }
-            if (lowTitle === 'genshin impact' && lowUrl.includes('epicgames.com')) {
-              return {
-                ...g,
-                image_url: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=1200&auto=format&fit=crop'
-              };
-            }
-            if (lowTitle === 'honkai: star rail' && lowUrl.includes('epicgames.com')) {
-              return {
-                ...g,
-                image_url: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=1200'
-              };
-            }
-            if (lowTitle === 'zenless zone zero' && lowUrl.includes('epicgames.com')) {
-              return {
-                ...g,
-                image_url: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?q=80&w=1200'
-              };
-            }
-            return g;
-          });
-          setGames(cleanedGames);
-        }
       }
     } catch (error) {
       console.error(error);
@@ -302,247 +233,7 @@ export default function Admin() {
     setInfo({ ...info, [e.target.name]: e.target.value });
   };
 
-  const POPULAR_GAMES_PRESETS = [
-    {
-      gameID: "riot_lol",
-      external: "League of Legends",
-      thumb: "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Jinx_0.jpg",
-      steamAppID: null,
-      isPreset: true,
-      aliases: ["lol", "league of legends", "liên minh huyền thoại", "lmht", "riot lol", "league"]
-    },
-    {
-      gameID: "riot_valorant",
-      external: "VALORANT",
-      thumb: "https://media.valorant-api.com/playercards/9fb348bc-41a0-91ad-8a3e-818035c4e561/wideart.png",
-      steamAppID: null,
-      isPreset: true,
-      aliases: ["valorant", "vlr", "riot valorant", "val", "vlorant"]
-    },
-    {
-      gameID: "riot_tft",
-      external: "Teamfight Tactics",
-      thumb: "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Teemo_0.jpg",
-      steamAppID: null,
-      isPreset: true,
-      aliases: ["tft", "teamfight tactics", "đấu trường chân lý", "dtcl", "riot tft", "cờ liên minh"]
-    },
-    {
-      gameID: "riot_runeterra",
-      external: "Legends of Runeterra",
-      thumb: "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/AurelionSol_0.jpg",
-      steamAppID: null,
-      isPreset: true,
-      aliases: ["legends of runeterra", "runeterra", "huyền thoại runeterra", "lor"]
-    },
-    {
-      gameID: "riot_wildrift",
-      external: "League of Legends: Wild Rift",
-      thumb: "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Ahri_0.jpg",
-      steamAppID: null,
-      isPreset: true,
-      aliases: ["wild rift", "wildrift", "tốc chiến", "toc chien", "lol mobile"]
-    },
-    {
-      gameID: "genshin_impact",
-      external: "Genshin Impact",
-      thumb: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=1200&auto=format&fit=crop",
-      steamAppID: null,
-      isPreset: true,
-      aliases: ["genshin impact", "genshin", "gi", "hoyoverse", "mihoyo"]
-    },
-    {
-      gameID: "honkai_star_rail",
-      external: "Honkai: Star Rail",
-      thumb: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=1200",
-      steamAppID: null,
-      isPreset: true,
-      aliases: ["honkai star rail", "hsr", "honkai", "star rail", "hoyoverse", "mihoyo"]
-    },
-    {
-      gameID: "zenless_zone_zero",
-      external: "Zenless Zone Zero",
-      thumb: "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?q=80&w=1200",
-      steamAppID: null,
-      isPreset: true,
-      aliases: ["zenless zone zero", "zzz", "zenless", "hoyoverse", "mihoyo"]
-    },
-    {
-      gameID: "fc_online",
-      external: "EA SPORTS FC Online",
-      thumb: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=1200&auto=format&fit=crop",
-      steamAppID: null,
-      isPreset: true,
-      aliases: ["fc online", "fo4", "fifa online 4", "fifa online", "fco"]
-    },
-    {
-      gameID: "minecraft_game",
-      external: "Minecraft",
-      thumb: "https://images.unsplash.com/photo-1605901309584-818e25960a8f?q=80&w=1200&auto=format&fit=crop",
-      steamAppID: null,
-      isPreset: true,
-      aliases: ["minecraft", "mc", "mojang"]
-    },
-    {
-      gameID: "pubg_mobile_game",
-      external: "PUBG Mobile",
-      thumb: "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1200&auto=format&fit=crop",
-      steamAppID: null,
-      isPreset: true,
-      aliases: ["pubg mobile", "pubgm", "pubg m"]
-    },
-    {
-      gameID: "lien_quan_mobile",
-      external: "Arena of Valor (Liên Quân Mobile)",
-      thumb: "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1200&auto=format&fit=crop",
-      steamAppID: null,
-      isPreset: true,
-      aliases: ["lien quan", "liên quân", "lien quan mobile", "lq", "lqmb", "arena of valor", "aov"]
-    }
-  ];
 
-  const handleGameSearch = async (index: number, query: string) => {
-    if (!query) {
-      alert("Vui lòng nhập tên game trước khi tìm kiếm!");
-      return;
-    }
-    setSearchLoading(prev => ({ ...prev, [index]: true }));
-    try {
-      const cleanQuery = query.toLowerCase().trim();
-      const normalizeTitle = (value: string) =>
-        value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-
-      // --- 1. Preset games ---
-      const matchingPresets = POPULAR_GAMES_PRESETS.filter(item =>
-        item.external.toLowerCase().includes(cleanQuery) ||
-        item.aliases.some(alias => alias.includes(cleanQuery) || cleanQuery.includes(alias))
-      );
-
-      const results: any[] = [];
-      const seen = new Set<string>();
-      const addResult = (title: string, imageUrl: string, extra: Record<string, any> = {}) => {
-        const key = normalizeTitle(title);
-        if (!title || !key || seen.has(key)) return;
-        seen.add(key);
-        results.push({ external: title, thumb: imageUrl, ...extra });
-      };
-
-      matchingPresets.forEach(p => addResult(p.external, p.thumb, { gameID: p.gameID, steamAppID: p.steamAppID, isPreset: true, source: 'preset' }));
-
-      // --- 2. CheapShark + Steam CDN header image (460x215, đẹp) ---
-      try {
-        const csRes = await fetch(`https://www.cheapshark.com/api/1.0/games?title=${encodeURIComponent(query)}&limit=15`);
-        if (csRes.ok) {
-          const csData: any[] = await csRes.json();
-          if (Array.isArray(csData)) {
-            csData.forEach((item: any) => {
-              const title = item.external || query;
-              // Ưu tiên ảnh header Steam CDN (to đẹp 460x215)
-              const steamHeader = item.steamAppID
-                ? `https://cdn.cloudflare.steamstatic.com/steam/apps/${item.steamAppID}/header.jpg`
-                : '';
-              const thumb = steamHeader || item.thumb || '';
-              addResult(title, thumb, {
-                gameID: item.gameID,
-                steamAppID: item.steamAppID || null,
-                thumb_small: item.thumb || '',
-                source: 'cheapshark+steam',
-              });
-            });
-          }
-        }
-      } catch (err) {
-        console.warn('CheapShark API error:', err);
-      }
-
-      // --- 3. Wikipedia API (Tìm kiếm toàn cầu miễn phí, không bị CORS, không cần key) ---
-      try {
-        const queryEncoded = encodeURIComponent(query);
-        // Gọi cả Wikipedia tiếng Anh và tiếng Việt song song
-        const [wpEnRes, wpViRes] = await Promise.all([
-          fetch(`https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=pageimages|pageterms&generator=search&piprop=original&pithumbsize=600&gsrsearch=${queryEncoded}&gsrlimit=8`),
-          fetch(`https://vi.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=pageimages|pageterms&generator=search&piprop=original&pithumbsize=600&gsrsearch=${queryEncoded}&gsrlimit=8`)
-        ]);
-
-        const processWpData = async (res: Response, lang: string) => {
-          if (!res.ok) return;
-          const data = await res.json();
-          if (data.query && data.query.pages) {
-            Object.values(data.query.pages).forEach((page: any) => {
-              const terms = page.terms || {};
-              const desc = (terms.description || []).join(' ').toLowerCase();
-              
-              // Kiểm tra xem bài viết có liên quan đến game, giải đấu, nhân vật game, thiết bị game hay nhà phát triển không
-              const isGameRelated = 
-                desc.includes('game') || 
-                desc.includes('playstation') || 
-                desc.includes('xbox') || 
-                desc.includes('nintendo') || 
-                desc.includes('software') || 
-                desc.includes('esport') || 
-                desc.includes('tournament') || 
-                desc.includes('series') || 
-                desc.includes('developer') ||
-                desc.includes('trò chơi') || 
-                desc.includes('điện tử') ||
-                desc.includes('nhà phát triển') ||
-                desc.includes('phát hành') ||
-                page.title.toLowerCase().includes('game') ||
-                page.title.toLowerCase().includes('video game');
-              
-              const imgUrl = page.original?.source || page.thumbnail?.source || '';
-              
-              // Nếu có ảnh và liên quan đến game hoặc có từ khóa khớp tên game trong tiêu đề
-              if (imgUrl && (isGameRelated || page.title.toLowerCase().includes(cleanQuery))) {
-                addResult(page.title, imgUrl, {
-                  gameID: `wiki-${lang}-${page.pageid}`,
-                  steamAppID: null,
-                  source: `wikipedia-${lang}`,
-                  description: terms.description?.[0] || 'Wikipedia Article'
-                });
-              }
-            });
-          }
-        };
-
-        await Promise.all([
-          processWpData(wpEnRes, 'en'),
-          processWpData(wpViRes, 'vi')
-        ]);
-      } catch (err) {
-        console.warn('Wikipedia API error:', err);
-      }
-
-      // --- 4. RAWG.io (nếu có key trong env) ---
-      const rawgKey = import.meta.env.VITE_RAWG_API_KEY || '';
-      if (rawgKey) {
-        try {
-          const rawgRes = await fetch(
-            `https://api.rawg.io/api/games?key=${rawgKey}&search=${encodeURIComponent(query)}&page_size=10`
-          );
-          if (rawgRes.ok) {
-            const rawgData = await rawgRes.json();
-            (rawgData.results || []).forEach((game: any) => {
-              addResult(game.name, game.background_image || '', {
-                gameID: `rawg-${game.id}`,
-                steamAppID: null,
-                source: 'rawg',
-                genres: (game.genres || []).map((g: any) => g.name).join(' / '),
-              });
-            });
-          }
-        } catch (err) {
-          console.warn('RAWG API error:', err);
-        }
-      }
-
-      setSearchResults(prev => ({ ...prev, [index]: results.slice(0, 15) }));
-    } catch (error) {
-      console.error('Error searching game:', error);
-    } finally {
-      setSearchLoading(prev => ({ ...prev, [index]: false }));
-    }
-  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -553,11 +244,10 @@ export default function Admin() {
     try {
       const { data: existingData } = await supabase.from('site_info').select('id').single();
 
-      // Remove id and valorant_profile from the payload so we don't attempt to update it or overwrite it
-      const { id, valorant_profile, ...restPayload } = info as any;
+      // Remove id, valorant_profile and favorite_games from the payload
+      const { id, valorant_profile, favorite_games, ...restPayload } = info as any;
       const updatePayload = {
-        ...restPayload,
-        favorite_games: games
+        ...restPayload
       };
 
       let error;
@@ -579,7 +269,6 @@ export default function Admin() {
       if (error && error.code === 'PGRST204') {
         console.warn("Some columns don't exist in 'site_info'. Falling back to saving without them.");
         const {
-          favorite_games,
           project_name,
           education_logo,
           education_desc,
@@ -603,8 +292,7 @@ export default function Admin() {
         }
         if (fallbackError) throw fallbackError;
 
-        setStatus({ type: 'error', message: 'Lưu cơ bản. Tạo thêm cột: favorite_games(JSONB), project_name, education_logo, education_desc, est_year, coordinates, location_text (TEXT) trên Supabase!' });
-        localStorage.setItem('favorite_games', JSON.stringify(games));
+        setStatus({ type: 'error', message: 'Lưu cơ bản. Tạo thêm cột: project_name, education_logo, education_desc, est_year, coordinates, location_text (TEXT) trên Supabase!' });
         localStorage.setItem('education_logo', education_logo || '');
         localStorage.setItem('education_desc', education_desc || '');
         localStorage.setItem('education_school_en', education_school_en || '');
@@ -621,7 +309,6 @@ export default function Admin() {
       if (error) throw error;
 
       // Also save to localStorage as backup
-      localStorage.setItem('favorite_games', JSON.stringify(games));
       localStorage.setItem('education_logo', info.education_logo || '');
       localStorage.setItem('education_desc', info.education_desc || '');
       localStorage.setItem('education_school_en', info.education_school_en || '');
@@ -672,8 +359,6 @@ export default function Admin() {
               <li>behance_url (text)</li>
               <li>twitch_url (text)</li>
               <li>discord_url (text)</li>
-              <li>favorite_games (jsonb)</li>
-              <li>valorant_profile (jsonb)</li>
               <li>project_name (text)</li>
             </ul>
           </div>
@@ -812,28 +497,6 @@ export default function Admin() {
             </button>
             <button
               type="button"
-              onClick={() => setActiveAdminTab('games')}
-              className={`flex items-center gap-2 px-6 py-4 font-mono text-[11px] tracking-widest uppercase transition-all duration-300 border-b-2 -mb-[1px] whitespace-nowrap ${activeAdminTab === 'games'
-                ? 'border-amber-500 text-amber-500 bg-amber-500/5'
-                : 'border-transparent text-gray-400 hover:text-white hover:bg-white/[0.02]'
-                }`}
-            >
-              <Gamepad2 className="w-4 h-4" />
-              <span>{t('favorite_games')}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveAdminTab('valorant')}
-              className={`flex items-center gap-2 px-6 py-4 font-mono text-[11px] tracking-widest uppercase transition-all duration-300 border-b-2 -mb-[1px] whitespace-nowrap ${activeAdminTab === 'valorant'
-                ? 'border-amber-500 text-amber-500 bg-amber-500/5'
-                : 'border-transparent text-gray-400 hover:text-white hover:bg-white/[0.02]'
-                }`}
-            >
-              <Gamepad2 className="w-4 h-4" />
-              <span>{t('val_profile')}</span>
-            </button>
-            <button
-              type="button"
               onClick={() => setActiveAdminTab('visitors')}
               className={`flex items-center gap-2 px-6 py-4 font-mono text-[11px] tracking-widest uppercase transition-all duration-300 border-b-2 -mb-[1px] whitespace-nowrap ${activeAdminTab === 'visitors'
                 ? 'border-amber-500 text-amber-500 bg-amber-500/5'
@@ -846,7 +509,7 @@ export default function Admin() {
           </div>
 
           <div className="relative min-h-[600px]">
-            <form onSubmit={handleSave} className={`space-y-12 ${activeAdminTab === 'info' || activeAdminTab === 'games' ? 'block' : 'hidden'}`}>
+            <form onSubmit={handleSave} className={`space-y-12 ${activeAdminTab === 'info' ? 'block' : 'hidden'}`}>
               <div className="space-y-12">
 
                 <div className={activeAdminTab === 'info' ? 'block' : 'hidden'}>
@@ -1002,194 +665,6 @@ export default function Admin() {
                     </div>
                   </div>
                 </div>
-
-                <div className={activeAdminTab === 'games' ? 'block' : 'hidden'}>
-                  <div className="space-y-12">
-                    <div className="space-y-6">
-                      <div className="flex items-center gap-4 mb-6">
-                        <div className="text-[10px] font-mono tracking-widest text-amber-500">04.</div>
-                        <h2 className="text-sm font-bold font-mono tracking-widest uppercase">{t('favorite_games')}</h2>
-                        <div className="flex-1 h-[1px] bg-white/10"></div>
-                      </div>
-
-                      <div className="space-y-8">
-                        {games.map((game, index) => (
-                          <div key={game.id} className="p-4 sm:p-6 border border-white/5 bg-white/[0.01] hover:border-white/10 transition-colors space-y-4">
-                            <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                              <span className="text-[10px] font-mono text-amber-500 uppercase font-bold">GAME #{index + 1}</span>
-                              <div className="flex items-center gap-3">
-                                <span className="text-[9px] font-mono text-gray-500 uppercase">{game.title || t('unknown')}</span>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const updated = games.filter((_, i) => i !== index);
-                                    setGames(updated);
-                                  }}
-                                  className="text-[9px] font-mono text-red-500 hover:text-red-400 bg-red-500/10 hover:bg-red-500/20 px-2 py-1 transition-colors uppercase border border-red-500/20"
-                                >
-                                  {t('delete')}
-                                </button>
-                              </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-                              {/* Left side: Image Preview */}
-                              <div className="md:col-span-4 lg:col-span-3 flex flex-col gap-2">
-                                <label className="text-[9px] font-mono tracking-widest text-gray-400 uppercase">
-                                  Ảnh bìa
-                                </label>
-                                <div className="w-full aspect-[16/10] bg-black/40 border border-white/10 rounded-sm overflow-hidden flex items-center justify-center relative group-hover:border-amber-500/30 transition-all">
-                                  {game.image_url ? (
-                                    <img
-                                      src={game.image_url}
-                                      alt={game.title || 'Preview'}
-                                      className="w-full h-full object-cover"
-                                      referrerPolicy="no-referrer"
-                                      onError={(e) => {
-                                        (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1200&auto=format&fit=crop";
-                                      }}
-                                    />
-                                  ) : (
-                                    <div className="text-[10px] font-mono text-gray-600 uppercase flex flex-col items-center gap-2">
-                                      <span className="w-8 h-8 rounded-full border border-white/5 flex items-center justify-center bg-white/[0.02]">?</span>
-                                      <span>Chưa có ảnh</span>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Right side: Inputs & Search */}
-                              <div className="md:col-span-8 lg:col-span-9 flex flex-col gap-4">
-                                <div className="grid grid-cols-1 gap-4">
-                                  <div className="flex flex-col gap-2">
-                                    <div className="flex items-center justify-between">
-                                      <label className="text-[9px] font-mono tracking-widest text-gray-400 uppercase">{t('game_name')}</label>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleGameSearch(index, game.title)}
-                                        disabled={searchLoading[index]}
-                                        className="text-[9px] font-mono text-amber-500 hover:text-amber-400 flex items-center gap-1 uppercase bg-transparent border-none cursor-pointer focus:outline-none transition-colors"
-                                      >
-                                        {searchLoading[index] ? <Loader2 className="w-3 h-3 animate-spin" /> : "🔍 TÌM ẢNH TỰ ĐỘNG"}
-                                      </button>
-                                    </div>
-                                    <input
-                                      type="text"
-                                      value={game.title}
-                                      onChange={(e) => {
-                                        const updated = games.map((g, i) => i === index ? { ...g, title: e.target.value } : g);
-                                        setGames(updated);
-                                      }}
-                                      className="bg-black/50 border border-white/10 p-2.5 text-xs focus:border-amber-500 focus:bg-amber-500/5 focus:outline-none transition-all text-white"
-                                      placeholder="VD: Valorant"
-                                    />
-                                  </div>
-
-                                  <div className="flex flex-col gap-2">
-                                    <label className="text-[9px] font-mono tracking-widest text-gray-400 uppercase">Link ảnh bìa (Image URL)</label>
-                                    <input
-                                      type="text"
-                                      value={game.image_url}
-                                      onChange={(e) => {
-                                        const updated = games.map((g, i) => i === index ? { ...g, image_url: e.target.value } : g);
-                                        setGames(updated);
-                                      }}
-                                      className="bg-black/50 border border-white/10 p-2.5 text-xs focus:border-amber-500 focus:bg-amber-500/5 focus:outline-none transition-all text-white"
-                                      placeholder="https://images.unsplash.com..."
-                                    />
-                                  </div>
-                                </div>
-
-                                {searchResults[index] && searchResults[index].length > 0 && (
-                                  <div className="border border-amber-500/20 bg-amber-500/5 p-3 space-y-2 rounded-sm mt-2">
-                                    <div className="flex justify-between items-center text-[9px] font-mono text-amber-500 tracking-wider">
-                                      <span>CHỌN GAME ĐỂ TỰ ĐỘNG ĐIỀN TÊN VÀ ẢNH BÌA:</span>
-                                      <button
-                                        type="button"
-                                        onClick={() => setSearchResults(prev => {
-                                          const updated = { ...prev };
-                                          delete updated[index];
-                                          return updated;
-                                        })}
-                                        className="text-gray-500 hover:text-white transition-colors uppercase text-[9px] font-mono"
-                                      >
-                                        Đóng
-                                      </button>
-                                    </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-48 overflow-y-auto pr-1">
-                                      {searchResults[index].map((result: any) => (
-                                        <button
-                                          key={result.gameID}
-                                          type="button"
-                                          onClick={() => {
-                                            const updated = games.map((g, i) => {
-                                              if (i === index) {
-                                                let imageUrl = result.thumb;
-                                                if (result.isPreset) {
-                                                  imageUrl = result.thumb;
-                                                } else if (result.steamAppID) {
-                                                  imageUrl = `https://cdn.cloudflare.steamstatic.com/steam/apps/${result.steamAppID}/header.jpg`;
-                                                }
-                                                return { ...g, title: result.external, image_url: imageUrl };
-                                              }
-                                              return g;
-                                            });
-                                            setGames(updated);
-                                            setSearchResults(prev => {
-                                              const updatedResults = { ...prev };
-                                              delete updatedResults[index];
-                                              return updatedResults;
-                                            });
-                                          }}
-                                          className="flex items-center gap-2.5 p-1.5 bg-black/40 hover:bg-amber-500/10 border border-white/5 hover:border-amber-500/20 text-left transition-all text-white rounded-sm group cursor-pointer"
-                                        >
-                                          <img
-                                            src={result.thumb}
-                                            alt={result.external}
-                                            className="w-10 h-7 object-cover border border-white/10 shrink-0"
-                                            referrerPolicy="no-referrer"
-                                          />
-                                          <div className="min-w-0 flex-1">
-                                            <p className="text-[11px] font-medium text-white group-hover:text-amber-500 truncate">{result.external}</p>
-                                             <p className="text-[9px] font-mono text-gray-400 group-hover:text-amber-500/80">
-                                               {result.source === 'preset' ? 'Premium Artwork' : 
-                                                result.source === 'cheapshark+steam' ? (result.steamAppID ? `Steam AppID: ${result.steamAppID}` : 'CheapShark') :
-                                                result.source === 'wikipedia-en' ? 'Wikipedia (EN)' :
-                                                result.source === 'wikipedia-vi' ? 'Wikipedia (VI)' :
-                                                result.source === 'rawg' ? 'RAWG.io' : 'Khác'}
-                                             </p>
-                                          </div>
-                                        </button>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setGames([...games, {
-                            id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString() + Math.random().toString(),
-                            title: '',
-                            category: '',
-                            image_url: '',
-                            description: '',
-                            rank: '',
-                            developer: ''
-                          }]);
-                        }}
-                        className="w-full p-4 border border-dashed border-white/20 text-gray-400 hover:text-amber-500 hover:border-amber-500/50 hover:bg-amber-500/5 transition-all flex items-center justify-center gap-2 font-mono text-[10px] tracking-widest uppercase"
-                      >
-                        + {t('add_game')}
-                      </button>
-                    </div>
-                  </div>
-                </div>
               </div>
 
               <div className="pt-10 flex flex-col sm:flex-row items-center justify-between gap-6 border-t border-white/10 mt-8">
@@ -1218,9 +693,7 @@ export default function Admin() {
                 </button>
               </div>
             </form>
-            <div className={activeAdminTab === 'valorant' ? 'block' : 'hidden'}>
-              <ValorantAdmin />
-            </div>
+
             <div className={activeAdminTab === 'visitors' ? 'block' : 'hidden'}>
               <div className="space-y-8">
                 {/* Stats Summary Cards */}

@@ -8,7 +8,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { getDeviceTier } from "../lib/performance";
 import { useVisitorTracker } from "../lib/visitorTracker";
 
-const GamingHub = lazy(() => import("./GamingHub"));
+
 
 const Tiktok = ({ size = 16 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -38,7 +38,7 @@ export default function Portfolio() {
   const stats = useVisitorTracker();
   const [siteInfo, setSiteInfo] = useState<SiteInfo | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showGaming, setShowGaming] = useState(false);
+
   const [showIntroPopup, setShowIntroPopup] = useState(false);
   const [showEducationPopup, setShowEducationPopup] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -467,10 +467,10 @@ export default function Portfolio() {
                       </div>
                     </motion.div>
 
-                    <div className="flex-1 flex flex-col sm:flex-row justify-between items-center sm:items-start w-full gap-4">
+                    <div className="flex-1 flex flex-col items-center sm:items-start w-full">
                       <div className="flex flex-col items-center sm:items-start">
                         {/* Name */}
-                        <h1 className="text-3xl xs:text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-display font-black tracking-widest leading-[1] mb-4">
+                        <h1 className="text-3xl xs:text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-display font-black tracking-widest leading-[1] mb-6">
                           {firstName}<br className="hidden sm:block" />
                           {lastName && (
                             <span className="text-transparent" style={{ WebkitTextStroke: "1px rgba(255,255,255,0.4)" }}>
@@ -478,108 +478,29 @@ export default function Portfolio() {
                             </span>
                           )}
                         </h1>
-                      </div>
 
-                      {/* Actions Group (Projects + Gaming Center) */}
-                      <div className="flex flex-row sm:flex-col items-center sm:items-end gap-4 sm:gap-6 mt-4 sm:mt-0">
-                        {/* Project Link */}
+                        {/* Project CTA Button */}
                         {info.project_link && (
                           <motion.button
                             onClick={() => {
                               setTargetUrl(info.project_link as string);
                               setCountdown(3);
                             }}
-                            initial={{ opacity: 0, filter: "blur(4px)" }}
-                            animate={{ opacity: 1, filter: "blur(0px)" }}
-                            transition={{ delay: 0.5, duration: 0.8 }}
-                            className="flex flex-col items-center sm:items-end opacity-60 hover:opacity-100 transition-all cursor-pointer group bg-transparent border-none outline-none focus:outline-none"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            whileHover={{ scale: 1.02, x: 5, backgroundColor: "rgba(245,158,11,0.08)", borderColor: "rgba(245,158,11,0.5)", color: "#ffffff" }}
+                            whileTap={{ scale: 0.98 }}
+                            transition={{ duration: 0.3, ease: "easeOut" }}
+                            className="flex items-center gap-3 px-6 py-3 border border-amber-500/30 text-amber-500 bg-amber-500/5 transition-all cursor-pointer font-mono text-[10px] sm:text-xs tracking-[0.2em] uppercase rounded-sm group focus:outline-none"
                           >
-                            <div className="relative w-9 h-9 sm:w-16 sm:h-16 mb-1 sm:mb-2">
-                              {/* Outer dashed ring */}
-                              <motion.svg
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-                                viewBox="0 0 100 100"
-                                className="absolute inset-0 w-full h-full text-white/20 group-hover:text-amber-500/50 transition-colors duration-500"
-                              >
-                                <circle cx="50" cy="50" r="48" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="4 8" />
-                              </motion.svg>
-                              {/* Inner solid ring */}
-                              <motion.svg
-                                animate={{ rotate: -360 }}
-                                transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-                                viewBox="0 0 100 100"
-                                className="absolute inset-0 w-full h-full text-amber-500/30 group-hover:text-amber-400 transition-colors duration-500"
-                              >
-                                <circle cx="50" cy="50" r="32" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="20 10" />
-                              </motion.svg>
-                              {/* Center dot */}
-                              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1 sm:w-1.5 h-1 sm:h-1.5 bg-amber-500 rounded-full shadow-[0_0_8px_rgba(245,158,11,0.8)] group-hover:scale-150 group-hover:shadow-[0_0_15px_rgba(245,158,11,1)] transition-all duration-300"></div>
-                            </div>
-
-                            {/* Decorative lines/text */}
-                            <div className="hidden sm:flex items-center gap-1.5 mb-0.5">
-                              <div className="w-6 h-[1px] bg-amber-500/50 group-hover:bg-amber-500/80 transition-colors duration-500"></div>
-                              <p className="text-[7px] font-mono tracking-[0.2em] text-amber-500 group-hover:text-amber-400 transition-colors duration-500 uppercase">{t('menu_project')}</p>
-                            </div>
-                            <div className="hidden sm:flex items-center gap-1.5">
-                              <div className="w-3 h-[1px] bg-amber-500/40 group-hover:bg-amber-500/80 transition-colors duration-500"></div>
-                              <p className="text-[7px] font-mono tracking-[0.2em] text-gray-500 group-hover:text-amber-400 transition-colors duration-500 uppercase">
-                                {info.project_name || "LINK"}
-                              </p>
-                            </div>
+                            <span className="relative flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                            </span>
+                            <span>{t('menu_project')} // {info.project_name || "LIVE DEMO"}</span>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="group-hover:translate-x-1 transition-transform"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                           </motion.button>
                         )}
-
-                        {/* Gaming Center Toggle */}
-                        <motion.button
-                          onClick={() => setShowGaming(true)}
-                          initial={{ opacity: 0, filter: "blur(4px)" }}
-                          animate={{ opacity: 1, filter: "blur(0px)" }}
-                          transition={{ delay: 0.6, duration: 0.8 }}
-                          className="flex flex-col items-center sm:items-end opacity-60 hover:opacity-100 transition-all cursor-pointer group bg-transparent border-none outline-none focus:outline-none"
-                        >
-                          <div className="relative w-9 h-9 sm:w-16 sm:h-16 mb-1 sm:mb-2">
-                            {/* Outer dashed ring */}
-                            <motion.svg
-                              animate={{ rotate: -360 }}
-                              transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
-                              viewBox="0 0 100 100"
-                              className="absolute inset-0 w-full h-full text-white/20 group-hover:text-amber-400/50 transition-colors duration-500"
-                            >
-                              <circle cx="50" cy="50" r="48" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="6 6" />
-                            </motion.svg>
-                            {/* Inner solid ring */}
-                            <motion.svg
-                              animate={{ rotate: 360 }}
-                              transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-                              viewBox="0 0 100 100"
-                              className="absolute inset-0 w-full h-full text-amber-500/30 group-hover:text-amber-300 transition-colors duration-500"
-                            >
-                              <circle cx="50" cy="50" r="32" stroke="currentColor" strokeWidth="1.5" fill="none" strokeDasharray="15 15" />
-                            </motion.svg>
-                            {/* Game icon in the center */}
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-amber-500 group-hover:text-amber-400 transition-colors">
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 sm:w-5 sm:h-5">
-                                <line x1="6" y1="12" x2="10" y2="12" />
-                                <line x1="8" y1="10" x2="8" y2="14" />
-                                <line x1="15" y1="13" x2="15.01" y2="13" />
-                                <line x1="18" y1="11" x2="18.01" y2="11" />
-                                <rect x="2" y="6" width="20" height="12" rx="3" />
-                              </svg>
-                            </div>
-                          </div>
-
-                          {/* Decorative lines/text */}
-                          <div className="hidden sm:flex items-center gap-1.5 mb-0.5">
-                            <div className="w-6 h-[1px] bg-amber-500/50 group-hover:bg-amber-500/80 transition-colors duration-500"></div>
-                            <p className="text-[7px] font-mono tracking-[0.2em] text-amber-500 group-hover:text-amber-400 transition-colors duration-500 uppercase">{t('menu_gaming')}</p>
-                          </div>
-                          <div className="hidden sm:flex items-center gap-1.5">
-                            <div className="w-3 h-[1px] bg-amber-500/40 group-hover:bg-amber-500/80 transition-colors duration-500"></div>
-                            <p className="text-[7px] font-mono tracking-[0.2em] text-gray-500 group-hover:text-amber-400 transition-colors duration-500">CENTER</p>
-                          </div>
-                        </motion.button>
                       </div>
                     </div>
                   </div>
@@ -694,9 +615,7 @@ export default function Portfolio() {
           )}
         </AnimatePresence>
 
-        <Suspense fallback={null}>
-          <GamingHub isOpen={showGaming} onClose={() => setShowGaming(false)} />
-        </Suspense>
+
 
         {/* Countdown Overlay */}
         <AnimatePresence>
